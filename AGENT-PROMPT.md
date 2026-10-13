@@ -121,8 +121,16 @@ Mid-session, if the user says something contradicting their profile (e.g., "I'm 
 ├── wiki/                  ← index.md, log.md, processed.md only
 ├── knowledge/             ← meta-knowledge about the user
 ├── outputs/               ← finished briefings/reports
-└── skills/                ← shared skill library (you load these)
+├── skills/                ← shared skill library (you load these)
+└── agents/                ← subagent definitions (kb-digest, kb-linter + dev agents)
 ```
+
+## Delegation
+
+For bulk reading (long sources) or full-KB sweeps, delegate to the read-only
+subagents defined in `agents/` (`kb-digest`, `kb-linter`, `researcher`).
+**Subagents propose, you apply** — they never write to the brain, never commit,
+never push. See SCHEMA.md → Delegation & Subagents.
 
 ---
 
