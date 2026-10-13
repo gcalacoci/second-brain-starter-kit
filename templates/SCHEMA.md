@@ -207,6 +207,11 @@ way this schema is the source of truth for KB conventions.
 | `kb-skill-add` | Meta-skill: how to add a new shared skill |
 | `onboard` | Guided setup: focus, favorite problems, goals, first seeds |
 
+Agent definitions (subagents) live in `agents/` — see the **Delegation &
+Subagents** section for authority boundaries. `kb-digest` and `kb-linter`
+are read-only brain agents; `researcher`, `code-reviewer`, `bug-fixer`,
+`implementer` are general dev agents.
+
 ### How agents discover them
 
 - **OpenCode**: `skills: ["{{WORKSPACE_DIR}}/skills"]` in `~/.config/opencode/opencode.json`
@@ -220,6 +225,62 @@ way this schema is the source of truth for KB conventions.
   trigger phrases users actually say.
 - Skill bodies use absolute paths and reference this schema as the source of truth.
 - Adding a skill: use the `kb-skill-add` skill, then add a row to this registry.
+
+## Delegation & Subagents
+
+The main session is persistent; subagents are ephemeral — they run one task and
+terminate. All continuity and bookkeeping is the main session's responsibility.
+
+### Agent definitions
+
+Installed in `agents/` (wired into Claude Code via `~/.claude/agents/` symlinks):
+
+| Agent | Type | Purpose |
+|---|---|---|
+| `kb-digest` | brain, read-only | Digest a long raw source → structured ingest proposal |
+| `kb-linter` | brain, read-only | Sweep the whole KB → structured lint findings |
+| `researcher` | dev, read-only | Explore codebases/docs/web → structured findings |
+| `code-reviewer` | dev, read-only | Review diffs for bugs/security/style/test gaps |
+| `bug-fixer` | dev, writes code | Reproduce → root-cause → fix + tests |
+| `implementer` | dev, writes code | Implement features from a plan/spec |
+
+### Authority boundaries
+
+| Action | Brain agents (kb-*) | Dev agents |
+|---|---|---|
+| Read brain files | Yes | Yes |
+| Read user's project files | Yes | Yes |
+| Write/edit brain content (`raw/pages/`, `wiki/`, `knowledge/`) | **No — propose only** | No (they work on user's projects) |
+| Write code in user's projects | n/a | Yes |
+| Git commit | **Never** | Never — report files changed, main session commits |
+| Git push | **Never** (guard blocks it inside the brain) | Never for the brain; per project rules otherwise |
+| Architectural / schema decisions | No — report options | No — report options |
+
+**The core rule: subagents propose, the main session applies.** One writer
+(the main session) keeps frontmatter discipline, index updates, and the log
+consistent — this is what makes the conflict-resolution protocol rarely needed.
+
+### Task framing
+
+1. One task, one outcome — a subagent finishes in one run or reports `blocked`.
+2. Acceptance criteria in the prompt ("Done when: …").
+3. Context is cheap, ambiguity is expensive — include paths, conventions,
+   relevant knowledge-file context. Subagents have no memory of prior tasks.
+4. Never re-delegate the same failed task unchanged.
+
+### When to delegate
+
+- Bulk reading that would flood main context (long-source ingest → `kb-digest`)
+- Full-KB sweeps (dream/weekly lint → `kb-linter`)
+- Independent parallel work (several inbox files at once)
+- Code review / implementation in the user's projects (dev agents)
+
+### Knowledge flow
+
+Subagents never write to `knowledge/` or `raw/pages/`. Their structured output
+flows back to the main session, which applies changes through the standard
+operations (ingest, dream, update) — so every write lands with proper
+frontmatter, index entry, and log line.
 
 ## Conflict Resolution
 
@@ -241,6 +302,22 @@ must never be added. Commits stay on this machine.
   `ingest: <title>`, `query: <title>`, `dream: <title>`, `session: <title>`, `skill: add <id>`.
 - **Never run `git push`.** There is no remote to push to, and there must not be one.
 - Backups are done locally (e.g. `git bundle`) if needed — never to a public host.
+
+
+## Automation (Dream Sequence)
+
+The Dream Sequence runs on a schedule via cron (installed at setup):
+
+- Runner script: `.overmind/dream-cron.sh` (headless agent invocation)
+- Logs: `.overmind/logs/dream-YYYY-MM-DD.log`
+- Schedule recorded in `.overmind/config.yaml` → `dream.schedule`, `dream.runner`
+- Current schedule: see the `# second-brain-dream` block in `crontab -l`
+
+When running unattended, the agent must still follow this schema, load the
+`kb-dream` skill, and commit locally. The runner never pushes. After each run,
+`dream.last-run` in config.yaml is updated. Test the wiring anytime with
+`.overmind/dream-cron.sh --dry-run`. If the schedule misses (machine off), trigger
+manually with "dream sequence" — same flow.
 
 ## MCP Resource Map
 

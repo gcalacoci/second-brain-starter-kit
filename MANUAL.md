@@ -229,6 +229,32 @@ collisions with other tools.
 
 ---
 
+### Subagents — the brain's read-only helpers
+
+Six agent definitions are installed with the kit (`agents/`), wired into
+Claude Code globally so every project can use them:
+
+| Agent | What it's for |
+|---|---|
+| `kb-digest` | Ingesting long documents: it reads the whole PDF/article and returns a structured digest — key points, entities, proposed pages. Your main session stays lean |
+| `kb-linter` | Full-KB health sweeps: contradictions, orphans, stale claims — returned as a findings report with proposed fixes |
+| `researcher` | Codebase/web research with structured findings |
+| `code-reviewer` | Reviews code diffs (read-only) |
+| `bug-fixer` | Reproduces, root-causes, fixes bugs + tests |
+| `implementer` | Implements features from a plan/spec |
+
+**How delegation works:** subagents **propose, never apply**. They can't write
+to the brain, commit, or push (the security guard enforces this for Claude).
+You (via the main session) review their structured output and apply it through
+the normal commands. This keeps one writer — the guarantee behind consistent
+frontmatter, index, and log.
+
+**When you'd notice the difference:** say "add this" with a 60-page PDF. With
+delegation, the main session delegates reading to `kb-digest`, gets the digest,
+and does the ingest — your conversation never carries 60 pages of text.
+
+---
+
 ## The Knowledge Layer (`knowledge/`)
 
 This is meta-knowledge **about you**, not the brain's content:

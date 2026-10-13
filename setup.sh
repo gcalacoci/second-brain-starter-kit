@@ -180,6 +180,27 @@ for skill_dir in "$SCRIPT_DIR"/skills/*/; do
     cp -R "$skill_dir"/* "$WORKSPACE_DIR/skills/$skill_id/"
 done
 
+# --- Install agent definitions (brain agents + general dev agents) ---
+mkdir -p "$WORKSPACE_DIR/agents"
+for agent_file in "$SCRIPT_DIR"/agents/*.md; do
+    agent_name=$(basename "$agent_file" .md)
+    # Substitute workspace path in brain agents
+    sed -e "s|{{WORKSPACE_DIR}}|$WORKSPACE_DIR|g" "$agent_file" > "$WORKSPACE_DIR/agents/$agent_name.md"
+done
+
+# Wire Claude Code global discovery (personal agents, all projects).
+# Individual symlinks — never clobber the user's own agents.
+mkdir -p "$HOME/.claude/agents"
+for agent_file in "$WORKSPACE_DIR"/agents/*.md; do
+    agent_name=$(basename "$agent_file")
+    if [[ -e "$HOME/.claude/agents/$agent_name" && ! -L "$HOME/.claude/agents/$agent_name" ]]; then
+        echo "  - ~/.claude/agents/$agent_name exists (your own) — left untouched"
+    else
+        ln -sfn "$agent_file" "$HOME/.claude/agents/${agent_name%.md}"
+    fi
+done
+echo "  Agents installed: $(ls "$WORKSPACE_DIR/agents" | wc -l) definitions (Claude Code discovery linked)"
+
 # Substitute workspace path inside skill bodies
 find "$WORKSPACE_DIR/skills" -name "SKILL.md" -exec \
     sed -i "s|{{WORKSPACE_DIR}}|$WORKSPACE_DIR|g" {} \;

@@ -21,6 +21,13 @@ Lint and health-check the Second Brain knowledge base at `{{WORKSPACE_DIR}}/`.
 10. Update `last-run` in `.overmind/config.yaml` (dream section) to today.
 11. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "dream: health check <YYYY-MM-DD>"` — **local-only repo, never push.**
 
+
+## Delegation (recommended at scale)
+
+Past ~50 pages, delegate the sweep to the `kb-linter` subagent (read-only,
+returns structured findings) and apply its `proposed_fix` items yourself.
+Keep the main context for judgment calls — the subagent does the bulk reading.
+
 ## Rules
 
 - Fix what you can confidently fix; FLAG the rest in the log entry rather than guessing.

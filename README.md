@@ -122,9 +122,24 @@ The same brain is operated by any agent:
 | `kb-dream` | The Dream Sequence: ingest new files + full lint (contradictions, orphans, stale) |
 | `kb-session-capture` | Save chat takeaways as structured session notes |
 | `kb-weekly-review` | Weekly maintenance report: vague tags, duplicates, orphans, inbox backlog |
+| `kb-update` | Update profile/goals when your context changes (change log + cascade) |
 | `kb-plan` | Gated 6-phase workflow for building brain features (explore → verify) |
 | `kb-skill-add` | Meta-skill: add a new shared skill correctly |
 | `onboard` | Guided first-session setup: focus, 12 favorite problems, goals, seeds |
+
+## Subagents Included
+
+Installed in `agents/` and wired into Claude Code globally (`~/.claude/agents/`).
+Brain agents are read-only — they propose, the main session applies (see SCHEMA.md → Delegation & Subagents).
+
+| Agent | Type | Purpose |
+|---|---|---|
+| `kb-digest` | brain | Digest a long raw source (PDF, article) → structured ingest proposal, without flooding main context |
+| `kb-linter` | brain | Sweep the whole KB → structured findings: contradictions, orphans, stale, missing pages |
+| `researcher` | dev | Explore codebases/docs/web → structured findings (adapted from mp-web3/claude-starter-kit) |
+| `code-reviewer` | dev | Review diffs for bugs, security, style, test gaps |
+| `bug-fixer` | dev | Reproduce → root-cause → fix + tests |
+| `implementer` | dev | Implement features from a plan/spec |
 
 ## Git Policy
 
