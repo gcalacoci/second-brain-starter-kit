@@ -297,24 +297,53 @@ git push -u origin master
 
 ### Safety hooks
 
-Installed for Claude Code by `setup.sh` (in `~/.claude/hooks/`):
+Registered for Claude Code by `setup.sh` (in `~/.claude/settings.json` → `hooks.PreToolUse`):
 
-| Hook | What it does |
+| Hook | Fires before | What it does |
+|---|---|---|
+| `security-guard.py` | Read, Write, Edit, Bash, Grep, Glob | The main defense layer (below) |
+| `file-backup.py` | Edit, Write | Copies any brain file to `~/.claude/backups/second-brain/<name>-<timestamp>.bak` before it's modified (keeps last 10 per file) |
+
+**What the guard blocks** (agent sees the reason; every block is logged to `~/.claude/state/guard-log.jsonl`):
+
+| Category | Blocked |
 |---|---|
-| `bash-safety.sh` | Blocks `git push`, force-push, and hard resets targeting the brain — the local-only guarantee survives accidental push attempts |
-| `file-backup.sh` | Before any edit to a file inside the brain, copies it to `~/.claude/backups/second-brain/<name>-<timestamp>.bak` |
+| Local-only guarantee | **Any `git push` from inside the brain** (cwd or `cd`-chained) — the KB never leaves the machine via an agent |
+| Path boundaries | Reads/writes/redirects outside `$HOME`, `/tmp`, `/var/tmp` |
+| Secrets | Reading or writing `.env`, `.key`, `.pem`, `*.secret` — via tools or shell commands (`cat`, `grep`, redirects, `tee`) |
+| Staging secrets | `git add` of secret files |
+| Force-push | `git push --force` anywhere |
+| Destructive ops | `rm`, `mv`, `chmod`… targeting paths outside allowed roots |
+
+Plus a `permissions.deny` list in settings.json (26 rules): `rm -rf`, `sudo`, `mkfs`, `dd`, `curl | bash`, and reads of `~/.ssh`, `~/.aws`, `~/.kube`, `~/.gnupg`, browser/gh credentials.
+
+**Test the guard yourself:**
+
+```bash
+echo '{"tool_name":"Bash","tool_input":{"command":"git push origin master"},"cwd":"~/prj/second-brain"}' \
+  | python3 ~/.claude/hooks/security-guard.py; echo "exit=$?"   # expect exit=2
+```
+
+**Review what's been blocked:**
+
+```bash
+cat ~/.claude/state/guard-log.jsonl | python3 -m json.tool
+```
+
+**Honest limitation:** these hooks enforce Claude Code. OpenCode has no equivalent
+hook system wired here — for OpenCode, the brain rules (`~/.claude/rules/` +
+shim instructions) are advisory. The git layer remains the hard guarantee for
+both agents: the brain repo has no remote, and the guard blocks Claude-initiated
+pushes. OpenCode-side enforcement (via plugin hooks) is possible future work.
 
 **Restoring a botched edit:**
 
 ```bash
-# list backups for a file
 ls ~/.claude/backups/second-brain/ | grep my-page
-# restore
-cp ~/.claude/backups/second-brain/my-page-2026-10-13-*.bak ~/prj/second-brain/raw/pages/topics/my-page.md
+cp ~/.claude/backups/second-brain/my-page-<timestamp>.bak ~/prj/second-brain/raw/pages/topics/my-page.md
+# or via git history:
+git log --oneline -- <file> && git checkout <hash> -- <file>
 ```
-
-Git history is the primary safety net (`git checkout HEAD~1 -- <file>`); the
-backup hook is the belt-and-suspenders layer for uncommitted edits.
 
 ### Privacy — what leaves the machine
 

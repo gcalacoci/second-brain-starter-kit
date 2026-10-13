@@ -98,9 +98,12 @@ def looks_like_path(token: str) -> bool:
 
 def check_bash(tool: str, cmd: str, cwd: str) -> None:
     # --- Brain local-only guarantee: no push from inside the brain, ever ---
-    if re.search(r"\bgit\b\s+.*\bpush\b", cmd) and (in_brain(cwd) or in_brain(cmd)):
-        block(tool, "LOCAL-ONLY: The Second Brain repo must never be pushed. "
-                    "Push is a deliberate manual action in your own terminal.", cmd)
+    # Covers: cwd inside the brain, `cd <brain> && git push`, and full paths
+    if re.search(r"\bgit\b\s+.*\bpush\b", cmd):
+        kb_resolved = resolve(KB_ROOT) if KB_ROOT and not KB_ROOT.startswith("{{") else ""
+        if (cwd and in_brain(cwd)) or (kb_resolved and kb_resolved in cmd):
+            block(tool, "LOCAL-ONLY: The Second Brain repo must never be pushed. "
+                        "Push is a deliberate manual action in your own terminal.", cmd)
 
     if re.search(r"git\s+push\s+.*(-f\b|--force\b)", cmd):
         block(tool, "SECURITY: Force-push is blocked", cmd)
