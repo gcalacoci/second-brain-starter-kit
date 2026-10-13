@@ -74,6 +74,10 @@ Plus: `save this session` (capture chat takeaways), `weekly review`
 (freeform health check), `update my profile` (context changed), `/onboard`
 (redo guided setup).
 
+**Hands-off mode:** say yes during `./setup.sh` and the Dream Sequence schedules
+itself via cron (weekly by default) — the brain tidies itself even when you forget
+it exists. See `MANUAL.md` → Automation.
+
 ## Architecture
 
 ```

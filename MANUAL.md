@@ -286,6 +286,93 @@ The same brain is operated by any agent:
 
 ---
 
+## Automation — The Dream Sequence Runs Itself
+
+During `./setup.sh` you were asked whether to schedule the Dream Sequence.
+If you said yes, a cron entry now runs it automatically:
+
+| Cadence choice | Schedule |
+|---|---|
+| Weekly (default) | Every Friday at 17:00 |
+| Daily | Every day at 09:00 |
+
+**What the cron job does:** runs your agent headlessly (OpenCode or Claude Code,
+whichever was found), which loads the `kb-dream` skill and executes the full
+sequence: ingest new inbox files, lint, update index/log, commit locally.
+
+**Where things live:**
+
+| Thing | Path |
+|---|---|
+| Runner script | `~/prj/second-brain/.overmind/dream-cron.sh` |
+| Run logs | `~/prj/second-brain/.overmind/logs/dream-YYYY-MM-DD.log` |
+| Cron entry | `crontab -l` (marked with `# second-brain-dream`) |
+| Config record | `.overmind/config.yaml` → `dream.schedule`, `dream.runner` |
+
+**Useful commands:**
+
+```bash
+# Test the wiring without mutating anything
+~/prj/second-brain/.overmind/dream-cron.sh --dry-run
+
+# See when it last ran and what it did
+ls -la ~/prj/second-brain/.overmind/logs/
+tail -20 ~/prj/second-brain/.overmind/logs/dream-$(date +%F).log
+
+# Change the cadence: edit the crontab, then update config.yaml to match
+crontab -e    # find the "# second-brain-dream" block
+```
+
+**Caveats:** the schedule only fires if the machine is on at the scheduled time.
+Missed runs are not retried — but you can always trigger manually with
+`dream sequence`, which does exactly the same thing.
+
+---
+
+## Optional: Obsidian as the Human Browser
+
+The agents write the brain; Obsidian is where *you* read it. This is exactly
+Karpathy's own workflow: agent on one side, Obsidian on the other.
+
+**Setup (2 minutes):**
+1. Open Obsidian → "Open folder as vault" → `~/prj/second-brain`
+2. `[[wikilinks]]` and the graph view work immediately — the whole KB is plain markdown
+
+**What's worth using:**
+
+| Feature | Why it fits this system |
+|---|---|
+| **Graph view** | See hubs and orphans at a glance — the visual complement to the Dream Sequence lint |
+| **Web Clipper** | Browser extension → set the save folder to `inbox/`. Clip first, ingest deliberately later |
+| **Dataview plugin** | Your frontmatter is Dataview-ready: build live tables like "all active problems" (`status: active`) or "pages not updated in 90 days" |
+| **Backlinks pane** | Instantly see which pages reference the one you're reading |
+| **Attachment folder** | Settings → Files → set to `raw/assets/` so images land inside the KB |
+
+**Suggested Dataview queries** (drop in any note):
+
+````markdown
+```dataview
+TABLE status, updated
+FROM "knowledge/problems"
+WHERE status = "active"
+```
+
+```dataview
+TABLE file.mtime AS "Modified"
+FROM "raw/pages"
+WHERE file.mtime < date(today) - dur(90 days)
+```
+````
+
+**Cautions:**
+
+- `.obsidian/` (your vault settings) is gitignored — it's machine-specific and shouldn't be committed
+- Don't install plugins that *write* into `wiki/` — the three-file rule (`index.md`, `log.md`, `processed.md`) is maintained by agents
+- Don't enable Obsidian Sync or publish this vault — the KB is local-first by design; use a private git remote if you need a backup
+- At 500+ pages the graph view turns into hairball — filter by folder or tag
+
+---
+
 ## Troubleshooting
 
 | Problem | Fix |
@@ -296,6 +383,8 @@ The same brain is operated by any agent:
 | Profile feels stale | Say "update my profile" or run `weekly review` |
 | Too many orphan pages | Run `dream sequence` — it links or flags them |
 | Inbox backlog | Run `dream sequence` or `weekly review` |
+| Scheduled dream didn't run | Check `~/prj/second-brain/.overmind/logs/`; common causes: machine was off/asleep, agent CLI missing from PATH in the script, or headless permission errors (Claude needs `--dangerously-skip-permissions` or a settings allowlist) |
+| Want to change the schedule | `crontab -e` → edit the `# second-brain-dream` block; mirror the change in `.overmind/config.yaml` |
 
 ---
 

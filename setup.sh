@@ -283,6 +283,58 @@ else
 fi
 
 # ===============================================
+# PHASE 4: Dream Sequence scheduling (optional)
+# ===============================================
+
+echo "Phase 4: Dream Sequence scheduling (optional) ..."
+read -p "Schedule the Dream Sequence to run automatically (cron)? [Y/n] " -n 1 -r
+echo
+SCHEDULED=0
+if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+  read -p "Cadence — [d]aily 9:00, [w]eekly Friday 17:00 [default w]: " CADENCE_INPUT
+  case "${CADENCE_INPUT:-w}" in
+    d*) SCHEDULE="0 9 * * *";  CADENCE="daily" ;;
+    *)  SCHEDULE="0 17 * * 5"; CADENCE="weekly" ;;
+  esac
+
+  # Pick an agent binary (absolute path — cron gets a minimal environment)
+  AGENT_BIN=""
+  AGENT_NAME=""
+  if command -v opencode >/dev/null 2>&1; then
+    AGENT_BIN="$(command -v opencode)"; AGENT_NAME="opencode"
+  elif command -v claude >/dev/null 2>&1; then
+    AGENT_BIN="$(command -v claude)"; AGENT_NAME="claude"
+  fi
+
+  if [[ -z "$AGENT_BIN" ]]; then
+    echo "  ! No agent CLI found (opencode or claude). Skipping schedule — run 'dream sequence' manually."
+  else
+    mkdir -p "$WORKSPACE_DIR/.overmind/logs"
+    sed -e "s|{{KB_DIR}}|$WORKSPACE_DIR|g" \
+        -e "s|{{AGENT_BIN}}|$AGENT_BIN|g" \
+        -e "s|{{AGENT_NAME}}|$AGENT_NAME|g" \
+        -e "s|{{AGENT_PATH}}|$PATH|g" \
+        "$SCRIPT_DIR/templates/dream-cron.sh" > "$WORKSPACE_DIR/.overmind/dream-cron.sh"
+    chmod +x "$WORKSPACE_DIR/.overmind/dream-cron.sh"
+
+    # Install/update the cron entry (idempotent — replaces previous brain entries)
+    CRON_BLOCK="# second-brain-dream
+$SCHEDULE $WORKSPACE_DIR/.overmind/dream-cron.sh"
+    ( crontab -l 2>/dev/null | grep -v "second-brain-dream" | grep -v "dream-cron.sh" ; echo "$CRON_BLOCK" ) | crontab - 2>/dev/null \
+      && echo "  Cron installed: $CADENCE ($SCHEDULE) via $AGENT_NAME" \
+      || echo "  ! crontab not available — schedule manually (see MANUAL.md)"
+    SCHEDULED=1
+
+    # Record schedule in config.yaml
+    sed -i "s|last-run: null|last-run: null\n    schedule: \"$SCHEDULE\"\n    runner: $AGENT_NAME|" "$WORKSPACE_DIR/.overmind/config.yaml" 2>/dev/null || true
+  fi
+else
+  echo "  Skipped. Run 'dream sequence' manually, or re-run setup to schedule."
+fi
+
+echo ""
+
+# ===============================================
 # Done
 # ===============================================
 
@@ -313,3 +365,8 @@ echo "  /onboard"
 echo ""
 echo "Guided setup (~15-20 min): focus, favorite problems, goals, first seeds."
 echo "Pause anytime — run /onboard again to resume."
+if [[ $SCHEDULED -eq 1 ]]; then
+  echo ""
+  echo "Dream Sequence scheduled ($CADENCE). Logs: $WORKSPACE_DIR/.overmind/logs/"
+  echo "Test the wiring anytime: $WORKSPACE_DIR/.overmind/dream-cron.sh --dry-run"
+fi

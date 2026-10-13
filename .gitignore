@@ -12,3 +12,6 @@ Thumbs.db
 *.key
 *.pem
 .env*
+
+# Obsidian workspace state (machine-specific — do not commit)
+.obsidian/
