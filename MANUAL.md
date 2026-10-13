@@ -17,6 +17,7 @@ Print this or keep it handy. These are the commands you'll use daily.
 | `dream sequence` | Lint + ingest new inbox files + find contradictions/orphans | `kb-dream` |
 | `weekly review` | Maintenance report: stale content, vague tags, backlog | `kb-weekly-review` |
 | `update my profile` / `I changed jobs` | Updates identity files with change log, cascades to goals/pages | `kb-update` |
+| `add a skill` / `add this workflow` | Creates a new shared skill any agent can use | `kb-skill-add` |
 | `/onboard` | Guided setup: focus, favorite problems, goals, seeds | `onboard` |
 | `/kb-plan <what to build>` | Gated 6-phase workflow for building brain features | `kb-plan` |
 
@@ -205,6 +206,29 @@ For building new brain features (not daily use — for architectural changes):
 
 ---
 
+### `add a skill` — Teach the brain a new trick
+
+```
+add a skill: summarize YouTube videos
+```
+
+**What happens:**
+- The `kb-skill-add` skill walks the agent through creating
+  `skills/<kebab-id>/SKILL.md` with proper frontmatter and trigger phrases
+- The skill is registered in `SCHEMA.md` (the registry all agents read)
+- Discovery is automatic: both Claude Code and OpenCode pick it up instantly
+  (symlink + config entry already point at `skills/`)
+- Commit: `skill: add <id>`
+
+**Why it matters:** any workflow you repeat ("ingest arxiv papers", "prep
+meeting briefs", "review my spending") becomes a one-phrase command, shared
+by every agent. This is how the system grows with you.
+
+**Pro tip:** If a skill is brain-specific, prefix it `kb-` to avoid ID
+collisions with other tools.
+
+---
+
 ## The Knowledge Layer (`knowledge/`)
 
 This is meta-knowledge **about you**, not the brain's content:
@@ -262,7 +286,6 @@ You are X, working on Y, goal is Z.
 **Local-only by default.** The repo has no remote and must never be pushed to a public host.
 
 - Each operation commits atomically: `ingest:`, `query:`, `dream:`, `session:`, `update:`, `skill:`
-- A safety hook blocks `git push` for this repo
 - For off-machine backup: create a **private** repo deliberately (never public)
 
 ```bash
@@ -271,6 +294,37 @@ cd ~/prj/second-brain
 git remote add origin git@github.com:YOUR_USERNAME/private-brain.git
 git push -u origin master
 ```
+
+### Safety hooks
+
+Installed for Claude Code by `setup.sh` (in `~/.claude/hooks/`):
+
+| Hook | What it does |
+|---|---|
+| `bash-safety.sh` | Blocks `git push`, force-push, and hard resets targeting the brain — the local-only guarantee survives accidental push attempts |
+| `file-backup.sh` | Before any edit to a file inside the brain, copies it to `~/.claude/backups/second-brain/<name>-<timestamp>.bak` |
+
+**Restoring a botched edit:**
+
+```bash
+# list backups for a file
+ls ~/.claude/backups/second-brain/ | grep my-page
+# restore
+cp ~/.claude/backups/second-brain/my-page-2026-10-13-*.bak ~/prj/second-brain/raw/pages/topics/my-page.md
+```
+
+Git history is the primary safety net (`git checkout HEAD~1 -- <file>`); the
+backup hook is the belt-and-suspenders layer for uncommitted edits.
+
+### Privacy — what leaves the machine
+
+The **files** never leave your machine (local-only git, no sync). What does
+leave: when an agent processes your content, the relevant text is sent to the
+model provider's API as part of the conversation — standard for any LLM use,
+nothing is persistently stored server-side. If that's a concern for specific
+material (credentials, medical, legal), keep it out of the brain or use a
+locally-hosted model. Secrets (`*.key`, `.env*`, `*.pem`) are gitignored by
+default — never ingest them.
 
 ---
 
@@ -282,7 +336,49 @@ The same brain is operated by any agent:
 |---|---|---|
 | **Claude Code** | `~/prj/CLAUDE.md` shim → `SCHEMA.md` | `~/.claude/skills/second-brain` symlink |
 | **OpenCode** | `~/.opencode/instructions.md` shim | `skills` entry in `~/.config/opencode/opencode.json` |
-| **Any other** | "Read `~/prj/second-brain/SCHEMA.md` and follow it" | Read `SKILL.md` files directly |
+| **Any other** | "Read `~/prj/second-brain/SCHEMA.md` and follow it" — or paste `AGENT-PROMPT.md` | Read `SKILL.md` files directly |
+
+`AGENT-PROMPT.md` is a paste-at-session-start bootstrap for agents without
+automatic discovery (fresh chats, web UIs, new tools). It contains the session
+checklist, the command→skill map, and the hard rules.
+
+### Programmatic access (MCP, optional)
+
+Agents with MCP support can query the brain without touching the filesystem,
+using the URI templates in `.overmind/mcp-resource-map.yaml`:
+
+| URI | Returns |
+|---|---|
+| `second-brain://schema` | The operating manual |
+| `second-brain://wiki/index` | Table of contents |
+| `second-brain://page/{path}` | A specific content page |
+| `second-brain://pages/tag/{tag}` | All pages with a tag |
+
+This is an acceleration, not a requirement — plain file reads always work.
+
+---
+
+## Moving to a New Machine (or reinstalling)
+
+The brain is a plain folder + git repo, so migrating is just:
+
+```bash
+# 1. Copy or clone the brain to the new machine (scp, private git repo, USB…)
+git clone git@github.com:YOUR_USERNAME/private-brain.git ~/prj/second-brain
+
+# 2. Re-run setup from the template — it detects the existing workspace and MERGES
+git clone https://github.com/YOUR_USERNAME/second-brain-starter-kit.git
+cd second-brain-starter-kit
+./setup.sh    # choose the same workspace path; confirm merge when prompted
+```
+
+Merge mode: existing content (all your pages, sources, knowledge files) is kept;
+only missing scaffolding (skills, shims, hooks, configs) is added. Your agent
+wiring (symlinks, config entries) is rebuilt for the new machine.
+
+**Upgrading the starter kit later** works the same way: pull the latest template,
+re-run `./setup.sh`, confirm merge — you get new/updated skills and templates
+without touching your knowledge.
 
 ---
 
@@ -385,6 +481,9 @@ WHERE file.mtime < date(today) - dur(90 days)
 | Inbox backlog | Run `dream sequence` or `weekly review` |
 | Scheduled dream didn't run | Check `~/prj/second-brain/.overmind/logs/`; common causes: machine was off/asleep, agent CLI missing from PATH in the script, or headless permission errors (Claude needs `--dangerously-skip-permissions` or a settings allowlist) |
 | Want to change the schedule | `crontab -e` → edit the `# second-brain-dream` block; mirror the change in `.overmind/config.yaml` |
+| A page has a `⚠️ Merge Note` section | Two agents edited the page and the merge was ambiguous. Read the note — it explains both versions and the resolution chosen. Fix manually if the choice was wrong; the note is history, keep it |
+| Broke a page badly | Restore from backup (`~/.claude/backups/second-brain/`) or from git (`git log --oneline -- <file>`, then `git checkout <hash> -- <file>`) |
+| New machine / reinstall | See "Moving to a New Machine" above — re-run `./setup.sh` in merge mode |
 
 ---
 
