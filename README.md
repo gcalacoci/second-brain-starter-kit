@@ -21,6 +21,15 @@ and by October you can't reconstruct what you know. This kit flips the model:
 - **Multi-agent by design.** One shared schema + shared skill library; Claude Code,
   OpenCode, or any other agent can operate the same brain.
 
+## Documentation
+
+| File | Audience | Purpose |
+|---|---|---|
+| `README.md` | Everyone | Overview, quick start, architecture |
+| `MANUAL.md` | **You** (the user) | Complete command reference, workflows, troubleshooting |
+| `AGENT-PROMPT.md` | **Agents** | Paste-at-session-start prompt that loads the brain |
+| `SCHEMA.md` | Agents (generated) | The operating manual installed into the workspace |
+
 ## Quick Start
 
 ```bash
@@ -52,6 +61,8 @@ and resume anytime.
 
 ## Daily Use — 4 Commands
 
+These are in `MANUAL.md` with full details. Quick version:
+
 | You say | What happens |
 |---|---|
 | `add this` + a link/file/text | Agent ingests it: raw copy saved, pages created/updated, index + log updated |
@@ -60,7 +71,8 @@ and resume anytime.
 | `dream sequence` | Scheduled or on-demand lint: ingests new inbox files, finds contradictions, orphans, stale claims |
 
 Plus: `save this session` (capture chat takeaways), `weekly review`
-(freeform health check), `/onboard` (redo guided setup).
+(freeform health check), `update my profile` (context changed), `/onboard`
+(redo guided setup).
 
 ## Architecture
 
