@@ -243,12 +243,64 @@ else
     echo "  ! python3 not found — add \"$WORKSPACE_DIR/skills\" to the 'skills' array in $OPENCODE_CONFIG manually"
 fi
 
-# Safety hooks (block git push for the brain, back up files before edits)
-mkdir -p "$HOME/.claude/hooks"
-cp "$SCRIPT_DIR/hooks/bash-safety.sh" "$HOME/.claude/hooks/"
-cp "$SCRIPT_DIR/hooks/file-backup.sh" "$HOME/.claude/hooks/"
-chmod +x "$HOME/.claude/hooks/"*.sh
-echo "  Safety hooks installed at ~/.claude/hooks/ (block push, pre-edit backup)"
+# Safety hooks: security guard + pre-edit backup (registered in settings.json)
+mkdir -p "$HOME/.claude/hooks" "$HOME/.claude/state"
+sed -e "s|{{KB_DIR}}|$WORKSPACE_DIR|g" \
+    "$SCRIPT_DIR/hooks/security-guard.py" > "$HOME/.claude/hooks/security-guard.py"
+sed -e "s|{{KB_DIR}}|$WORKSPACE_DIR|g" \
+    "$SCRIPT_DIR/hooks/file-backup.py" > "$HOME/.claude/hooks/file-backup.py"
+chmod +x "$HOME/.claude/hooks/security-guard.py" "$HOME/.claude/hooks/file-backup.py"
+# Superseded script from older installs
+rm -f "$HOME/.claude/hooks/bash-safety.sh"
+
+# Register hooks + permissions in ~/.claude/settings.json (merge, never clobber)
+python3 - "$HOME/.claude/settings.json" "$SCRIPT_DIR/templates/settings-permissions.json" <<'PYEOF'
+import json, os, sys
+
+settings_path, perms_path = sys.argv[1], sys.argv[2]
+os.makedirs(os.path.dirname(settings_path), exist_ok=True)
+
+cfg = {}
+if os.path.exists(settings_path):
+    try:
+        with open(settings_path) as f:
+            cfg = json.load(f)
+    except Exception:
+        cfg = {}
+
+# --- Merge deny list ---
+extra = json.load(open(perms_path))
+deny = set(cfg.get("permissions", {}).get("deny", [])) | set(extra.get("deny", []))
+cfg.setdefault("permissions", {})["deny"] = sorted(deny)
+
+# --- Register hooks (idempotent) ---
+hooks = cfg.setdefault("hooks", {})
+pre = hooks.setdefault("PreToolUse", [])
+
+def has(hook_list, needle):
+    return any(needle in json.dumps(h) for h in hook_list)
+
+if not has(pre, "security-guard.py"):
+    pre.append({
+        "matcher": "Read|Write|Edit|Bash|Grep|Glob|NotebookEdit",
+        "hooks": [{"type": "command",
+                   "command": "python3 $HOME/.claude/hooks/security-guard.py",
+                   "timeout": 5}],
+    })
+if not has(pre, "file-backup.py"):
+    pre.append({
+        "matcher": "Edit|Write",
+        "hooks": [{"type": "command",
+                   "command": "python3 $HOME/.claude/hooks/file-backup.py",
+                   "timeout": 5}],
+    })
+
+with open(settings_path, "w") as f:
+    json.dump(cfg, f, indent=2)
+
+print("  settings.json updated: security-guard + file-backup registered, deny list merged")
+PYEOF
+echo "  Safety layer installed: security-guard.py (boundaries, secrets, push guard) + file-backup.py"
 
 echo ""
 
