@@ -1,0 +1,209 @@
+# {{WORKSPACE_DIR}} — Second Brain Knowledge Base
+
+**Owner:** {{USER_NAME}} — {{USER_BIO}}
+
+This is the single source of truth for all agents accessing this knowledge base.
+All agents must read this schema before any operation. This file is agent-agnostic:
+the same schema is followed by Claude Code, OpenCode, and any other agent.
+
+## Identity
+
+This is a Karpathy-style LLM Wiki knowledge base. It is multi-agent aware,
+multi-project accessible, and self-improving. It lives at `{{WORKSPACE_DIR}}`.
+
+Philosophy: the LLM incrementally builds and maintains a persistent, interlinked
+wiki of markdown pages sitting between the user and the raw sources. Knowledge is
+compiled once and kept current, not re-derived on every query. The wiki is a
+compounding artifact — it gets richer with every source ingested and every valuable
+answer filed back.
+
+## Architecture
+
+```
+{{WORKSPACE_DIR}}/
+│
+├── SCHEMA.md                  ← this file (the schema)
+├── inbox/                     ← quick capture; processed by dream sequence / weekly review
+├── skills/                    ← shared skill library (see Skills section)
+│
+├── .overmind/
+│   ├── config.yaml
+│   └── mcp-resource-map.yaml
+│
+├── raw/
+│   ├── sources/               ← immutable raw dumps (links, articles, notes, PDFs)
+│   ├── session-notes/         ← capture notes from agent conversations
+│   └── pages/                 ← THE BRAIN'S CONTENT (agent-written & maintained)
+│       ├── topics/            ← concept / topic pages
+│       ├── entities/          ← people, places, orgs, products, concepts
+│       └── sources/           ← one source-summary page per ingested raw file
+│
+├── wiki/                      ← NAVIGATION + BOOKKEEPING ONLY
+│   ├── index.md               ← table of contents (catalogs all pages in raw/pages/)
+│   ├── log.md                 ← chronological activity log (append-only)
+│   └── processed.md           ← registry of ingested raw files
+│
+├── knowledge/                 ← META-KNOWLEDGE about the user (created by /onboard)
+│   ├── user/profile.md        ← who the user is, what the brain is for
+│   ├── user/goals.md          ← end goal + subgoals
+│   ├── problems/              ← favorite problems (Feynman-style)
+│   └── projects/              ← project-specific working notes
+│
+└── outputs/                   ← finished deliverables for the user
+    ├── briefings/
+    ├── reports/
+    └── summaries/
+```
+
+### Hard rules
+
+- `wiki/` contains ONLY `index.md`, `log.md`, `processed.md`. Never put content there.
+- `raw/sources/` is IMMUTABLE. Once a file lands there it is never edited or deleted.
+- All content pages live in `raw/pages/`, never in `wiki/`.
+- Every content page has YAML frontmatter (see Frontmatter Conventions).
+- New captures go to `inbox/` first; ingestion moves them to `raw/sources/` + pages.
+
+## Frontmatter Conventions
+
+Every content page in `raw/pages/` (and every session note in `raw/session-notes/`)
+MUST start with a YAML frontmatter block. This enables cross-agent search, filtering,
+and tooling.
+
+### Required fields (all pages)
+
+| Field | Meaning |
+|---|---|
+| `id` | Unique kebab-case identifier for the page |
+| `type` | `topic`, `entity`, `source-summary`, or `session-note` |
+| `title` | Human-readable title |
+| `tags` | Array of lowercase keywords |
+| `created` | ISO date (YYYY-MM-DD) the page was first created |
+| `updated` | ISO date of the last modification |
+| `agent` | Which agent created or last edited the page |
+
+### Type-specific fields
+
+| Type | Extra fields |
+|---|---|
+| `topic` | `sources` (raw file paths), `related` (wikilinks to other pages) |
+| `entity` | `kind` (`person`\|`organization`\|`product`\|`place`\|`concept`), `sources`, `related` |
+| `source-summary` | `raw-file` (path to the raw source), `topics`, `entities`, `ingested` (date) |
+| `session-note` | `date`, `participants`, `duration`, `topics`, `pages-updated` |
+
+### Example
+
+```yaml
+# topic page (raw/pages/topics/<slug>.md)
+---
+id: machine-learning-fundamentals
+type: topic
+title: "Machine Learning Fundamentals"
+tags: [ml, fundamentals, ai]
+sources: [raw/sources/ml-intro-2026.md]
+related: [[Neural Networks], [[Gradient Descent]]]
+created: 2026-10-13
+updated: 2026-10-13
+agent: opencode
+---
+```
+
+### Rules
+
+- Filenames are kebab-case slugs: `machine-learning-fundamentals.md`.
+- Cross-link pages using `[[wikilinks]]` in the frontmatter `related`/`topics`/`entities`
+  fields and in the page body.
+- Always bump the `updated` date when a page changes.
+
+## The 5 Operations
+
+1. **INGEST** — move the source from `inbox/` (or accept directly), save it untouched
+   into `raw/sources/`, create a source summary, create/update topic & entity pages,
+   update `wiki/index.md`, append to `wiki/log.md`, add a row to `wiki/processed.md`.
+2. **QUERY** — read `wiki/index.md` first, read the relevant pages, answer with
+   citations. On request ("save that"), file the answer back as a new topic page.
+3. **DREAM** — process new `inbox/` files, then lint: find contradictions, stale
+   claims, orphan pages, missing pages; fix or flag them. Run on command or on schedule.
+4. **INDEX + LOG** — always keep `wiki/index.md` current and append to `wiki/log.md`.
+5. **SESSION CAPTURE** — on "save this session", write a session note into
+   `raw/session-notes/` and update any affected content pages.
+
+Each operation must update the relevant pages AND append to `wiki/log.md`.
+Log entry format: `## [YYYY-MM-DD] ingest|query|dream|session - short title`.
+
+**The self-improving rule:** every ingest and every valuable query must touch a
+content page and append to the log. That write-back is what makes the brain compound.
+
+These operations are published as skills in `skills/` — load the matching skill
+when triggered (`kb-ingest`, `kb-query`, `kb-dream`, `kb-session-capture`).
+
+## Skills
+
+`skills/` is the single source of truth for skills shared across agents — the same
+way this schema is the source of truth for KB conventions.
+
+### Registry
+
+| Skill ID | Purpose |
+|---|---|
+| `kb-ingest` | Ingest a source into the brain |
+| `kb-query` | Answer a question from the brain with citations |
+| `kb-dream` | Run the Dream Sequence (lint / health check) |
+| `kb-session-capture` | Save chat takeaways into the brain |
+| `kb-weekly-review` | Weekly maintenance report (tags, orphans, duplicates, backlog) |
+| `kb-plan` | Gated 6-phase workflow for building brain features |
+| `kb-skill-add` | Meta-skill: how to add a new shared skill |
+| `onboard` | Guided setup: focus, favorite problems, goals, first seeds |
+
+### How agents discover them
+
+- **OpenCode**: `skills: ["{{WORKSPACE_DIR}}/skills"]` in `~/.config/opencode/opencode.json`
+- **Claude Code**: `~/.claude/skills/second-brain` symlink → `{{WORKSPACE_DIR}}/skills`
+- **Other agents**: read the relevant `SKILL.md` directly (paths are absolute)
+
+### Skill conventions
+
+- Skill ID = directory name: lowercase kebab-case, unique, brain skills prefixed `kb-`.
+- Every `SKILL.md` has `name` + `description` frontmatter; the description contains the
+  trigger phrases users actually say.
+- Skill bodies use absolute paths and reference this schema as the source of truth.
+- Adding a skill: use the `kb-skill-add` skill, then add a row to this registry.
+
+## Knowledge Layer (meta)
+
+`knowledge/` holds meta-knowledge about the user and the brain's purpose:
+
+- `user/profile.md` — identity, focus, communication style (created by `/onboard`)
+- `user/goals.md` — end goal and subgoals the brain serves
+- `problems/` — the user's favorite problems; new knowledge should be tested
+  against these when deciding what matters
+- `projects/` — per-project working notes
+
+Read the relevant knowledge files at session start when working on this brain.
+Re-run `/onboard` to refresh them.
+
+## Conflict Resolution
+
+If a page's `updated` date has changed since the agent last read it, the page was
+modified by another agent or the user. Protocol:
+
+1. Re-read the page from disk.
+2. Merge your changes into the latest version.
+3. If the merge is ambiguous, add a `## ⚠️ Merge Note` section at the bottom explaining
+   the conflict and your resolution.
+4. Update the `updated` date in frontmatter.
+
+## Git Policy
+
+The knowledge base is a **local-only** git repository by default. No remote is
+configured; do not add one without the user's explicit instruction (and if added,
+it must be a PRIVATE repo — never public).
+
+- Each operation produces an atomic commit:
+  `ingest: <title>`, `query: <title>`, `dream: <title>`, `session: <title>`, `skill: add <id>`.
+- Never run `git push` for this repo unless the user explicitly asks.
+- Backups are done locally (e.g. `git bundle`) if needed.
+
+## MCP Resource Map
+
+See `.overmind/mcp-resource-map.yaml` for MCP resource URI templates. MCP access is
+an optional acceleration, not a requirement — any agent can read the files directly.
