@@ -79,9 +79,23 @@ Write to `knowledge/user/profile.md` with:
 ---
 tags: [user, profile, focus]
 created: YYYY-MM-DD
+last_reviewed: YYYY-MM-DD
 focus: "whatever they chose"
 ---
 ```
+
+**Structure requirement — the file MUST have these two sections:**
+
+1. **Current State** (top) — who the user is right now: role, focus, context.
+2. **Change Log** (bottom) — an append-only history, seeded with the onboarding
+   entry:
+   ```markdown
+   ## Change Log
+   - YYYY-MM-DD: Profile created — <one-line current state>
+   ```
+
+Future transitions (new job, team change, role change) are appended here by the
+`kb-update` skill — never overwriting the current state. See `skills/kb-update/SKILL.md`.
 
 Save, commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "onboard: step 1 - focus defined"`
 
@@ -135,9 +149,9 @@ new piece of knowledge can be tested against them.
 
 ## Problems
 
-1. [Problem 1] — [One-liner]
-   - Layer: [Craft/Work/Understanding/Person]
-   - Why important: [Why this matters]
+| # | Problem | One-liner | Layer | Status |
+|---|---------|-----------|-------|--------|
+| 1 | [Problem 1] | [One-liner] | [Craft/Work/Understanding/Person] | active |
 2. [Problem 2] — ...
 ```
 
@@ -173,6 +187,7 @@ Write `knowledge/user/goals.md`:
 ---
 tags: [goals, milestones]
 created: YYYY-MM-DD
+last_reviewed: YYYY-MM-DD
 ---
 
 # Goals for Your Second Brain
@@ -185,10 +200,18 @@ created: YYYY-MM-DD
 
 ## Subgoals
 
-| # | Milestone | Done When | Mental Models |
-|---|-----------|----------|---------------|
-| 1 | [Milestone] | [Criteria] | [1,2,3] |
+| # | Milestone | Done When | Mental Models | Status |
+|---|-----------|----------|---------------|--------|
+| 1 | [Milestone] | [Criteria] | [1,2,3] | active |
+
+## Change Log
+
+- YYYY-MM-DD: Goals created — end goal: <one-liner>
 ```
+
+**Structure requirement:** each subgoal carries a `Status` column (`active`,
+later `completed`/`abandoned` with a `closed:` date via the `kb-update` skill).
+The `## Change Log` is append-only.
 
 Save, commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "onboard: step 3 - goals defined"`
 

@@ -1,6 +1,7 @@
-# {{WORKSPACE_DIR}} — Second Brain Knowledge Base
+# Second Brain Knowledge Base — Shared Schema
 
-**Owner:** {{USER_NAME}} — {{USER_BIO}}
+**KB Location:** `{{WORKSPACE_DIR}}/`
+**Schema Path:** `{{WORKSPACE_DIR}}/SCHEMA.md`
 
 This is the single source of truth for all agents accessing this knowledge base.
 All agents must read this schema before any operation. This file is agent-agnostic:
@@ -9,7 +10,8 @@ the same schema is followed by Claude Code, OpenCode, and any other agent.
 ## Identity
 
 This is a Karpathy-style LLM Wiki knowledge base. It is multi-agent aware,
-multi-project accessible, and self-improving. It lives at `{{WORKSPACE_DIR}}`.
+multi-project accessible, and self-improving. It lives at `{{WORKSPACE_DIR}}/`
+and is reachable from any project under `~/prj/`.
 
 Philosophy: the LLM incrementally builds and maintains a persistent, interlinked
 wiki of markdown pages sitting between the user and the raw sources. Knowledge is
@@ -38,16 +40,16 @@ answer filed back.
 │       ├── entities/          ← people, places, orgs, products, concepts
 │       └── sources/           ← one source-summary page per ingested raw file
 │
+├── knowledge/                 ← META-KNOWLEDGE about the user (see Knowledge Layer)
+│   ├── user/profile.md
+│   ├── user/goals.md
+│   ├── problems/
+│   └── projects/
+│
 ├── wiki/                      ← NAVIGATION + BOOKKEEPING ONLY
 │   ├── index.md               ← table of contents (catalogs all pages in raw/pages/)
 │   ├── log.md                 ← chronological activity log (append-only)
 │   └── processed.md           ← registry of ingested raw files
-│
-├── knowledge/                 ← META-KNOWLEDGE about the user (created by /onboard)
-│   ├── user/profile.md        ← who the user is, what the brain is for
-│   ├── user/goals.md          ← end goal + subgoals
-│   ├── problems/              ← favorite problems (Feynman-style)
-│   └── projects/              ← project-specific working notes
 │
 └── outputs/                   ← finished deliverables for the user
     ├── briefings/
@@ -61,7 +63,44 @@ answer filed back.
 - `raw/sources/` is IMMUTABLE. Once a file lands there it is never edited or deleted.
 - All content pages live in `raw/pages/`, never in `wiki/`.
 - Every content page has YAML frontmatter (see Frontmatter Conventions).
-- New captures go to `inbox/` first; ingestion moves them to `raw/sources/` + pages.
+- New captures go to `inbox/` first; ingestion moves them into `raw/sources/` + pages.
+
+## Knowledge Layer (meta)
+
+`knowledge/` holds meta-knowledge about the user and the brain's purpose:
+
+- `user/profile.md` — identity, focus, communication style (created by `/onboard`)
+- `user/goals.md` — end goal and subgoals the brain serves
+- `problems/` — the user's favorite problems; new knowledge should be tested
+  against these when deciding what matters
+- `projects/` — per-project working notes
+
+Read the relevant knowledge files at session start when working on this brain.
+
+### Change Log convention (identity files)
+
+`profile.md`, `goals.md`, and each problem file carry TWO parts:
+
+1. **Current state** (top) — who the user is right now. What agents use day-to-day.
+2. **## Change Log** (bottom) — an **append-only** dated history of transitions:
+
+```markdown
+## Change Log
+- 2026-10-13: Profile created — job searching, learning ML
+- 2027-01-15: Hired at Acme AI as Senior Python Dev
+- 2027-03-02: Moved to AI team; architect of Project X (new language: Rust)
+```
+
+Rules:
+- Transitions are **never overwritten or deleted** — the history of change is
+  itself knowledge.
+- Goals are closed (`completed`/`abandoned` + `closed:` date), never deleted.
+- Problems may be `parked` (with a date) — they stay on disk.
+- Updates go through the `kb-update` skill; identity files are never silently
+  rewritten by an agent. If a user statement contradicts the profile mid-session,
+  the agent proposes an update instead of applying it.
+- `last_reviewed` in frontmatter tracks freshness; `kb-weekly-review` flags
+  identity files not reviewed in 90+ days.
 
 ## Frontmatter Conventions
 
@@ -90,12 +129,11 @@ and tooling.
 | `source-summary` | `raw-file` (path to the raw source), `topics`, `entities`, `ingested` (date) |
 | `session-note` | `date`, `participants`, `duration`, `topics`, `pages-updated` |
 
-### Example
+### Examples
 
 ```yaml
 # topic page (raw/pages/topics/<slug>.md)
 ---
-id: machine-learning-fundamentals
 type: topic
 title: "Machine Learning Fundamentals"
 tags: [ml, fundamentals, ai]
@@ -103,6 +141,20 @@ sources: [raw/sources/ml-intro-2026.md]
 related: [[Neural Networks], [[Gradient Descent]]]
 created: 2026-10-13
 updated: 2026-10-13
+agent: opencode
+---
+```
+
+```yaml
+# source summary (raw/pages/sources/<slug>.md)
+---
+type: source-summary
+title: "Summary: LLM Wiki Pattern"
+raw-file: raw/sources/karpathy-llm-wiki.md
+tags: [knowledge-management, llm, wiki]
+topics: [[Second Brain], [[LLM Wiki]]]
+entities: [[Andrej Karpathy]]
+ingested: 2026-10-13
 agent: opencode
 ---
 ```
@@ -116,13 +168,13 @@ agent: opencode
 
 ## The 5 Operations
 
-1. **INGEST** — move the source from `inbox/` (or accept directly), save it untouched
-   into `raw/sources/`, create a source summary, create/update topic & entity pages,
-   update `wiki/index.md`, append to `wiki/log.md`, add a row to `wiki/processed.md`.
+1. **INGEST** — save a raw source untouched into `raw/sources/`, create a source
+   summary, create/update topic & entity pages, update `wiki/index.md`, append to
+   `wiki/log.md`, add a row to `wiki/processed.md`.
 2. **QUERY** — read `wiki/index.md` first, read the relevant pages, answer with
    citations. On request ("save that"), file the answer back as a new topic page.
-3. **DREAM** — process new `inbox/` files, then lint: find contradictions, stale
-   claims, orphan pages, missing pages; fix or flag them. Run on command or on schedule.
+3. **DREAM** — ingest new raw files, then lint: find contradictions, stale claims,
+   orphan pages, missing pages; fix or flag them. Run on command or on schedule.
 4. **INDEX + LOG** — always keep `wiki/index.md` current and append to `wiki/log.md`.
 5. **SESSION CAPTURE** — on "save this session", write a session note into
    `raw/session-notes/` and update any affected content pages.
@@ -133,8 +185,8 @@ Log entry format: `## [YYYY-MM-DD] ingest|query|dream|session - short title`.
 **The self-improving rule:** every ingest and every valuable query must touch a
 content page and append to the log. That write-back is what makes the brain compound.
 
-These operations are published as skills in `skills/` — load the matching skill
-when triggered (`kb-ingest`, `kb-query`, `kb-dream`, `kb-session-capture`).
+These operations are also published as skills (`kb-ingest`, `kb-query`, `kb-dream`,
+`kb-session-capture`) in `skills/` — load the matching skill when triggered.
 
 ## Skills
 
@@ -150,6 +202,7 @@ way this schema is the source of truth for KB conventions.
 | `kb-dream` | Run the Dream Sequence (lint / health check) |
 | `kb-session-capture` | Save chat takeaways into the brain |
 | `kb-weekly-review` | Weekly maintenance report (tags, orphans, duplicates, backlog) |
+| `kb-update` | Update profile/goals/problems when the user's context changes (change log + cascade) |
 | `kb-plan` | Gated 6-phase workflow for building brain features |
 | `kb-skill-add` | Meta-skill: how to add a new shared skill |
 | `onboard` | Guided setup: focus, favorite problems, goals, first seeds |
@@ -168,19 +221,6 @@ way this schema is the source of truth for KB conventions.
 - Skill bodies use absolute paths and reference this schema as the source of truth.
 - Adding a skill: use the `kb-skill-add` skill, then add a row to this registry.
 
-## Knowledge Layer (meta)
-
-`knowledge/` holds meta-knowledge about the user and the brain's purpose:
-
-- `user/profile.md` — identity, focus, communication style (created by `/onboard`)
-- `user/goals.md` — end goal and subgoals the brain serves
-- `problems/` — the user's favorite problems; new knowledge should be tested
-  against these when deciding what matters
-- `projects/` — per-project working notes
-
-Read the relevant knowledge files at session start when working on this brain.
-Re-run `/onboard` to refresh them.
-
 ## Conflict Resolution
 
 If a page's `updated` date has changed since the agent last read it, the page was
@@ -194,14 +234,13 @@ modified by another agent or the user. Protocol:
 
 ## Git Policy
 
-The knowledge base is a **local-only** git repository by default. No remote is
-configured; do not add one without the user's explicit instruction (and if added,
-it must be a PRIVATE repo — never public).
+The knowledge base is a **local-only** git repository. No remote is configured and
+must never be added. Commits stay on this machine.
 
 - Each operation produces an atomic commit:
   `ingest: <title>`, `query: <title>`, `dream: <title>`, `session: <title>`, `skill: add <id>`.
-- Never run `git push` for this repo unless the user explicitly asks.
-- Backups are done locally (e.g. `git bundle`) if needed.
+- **Never run `git push`.** There is no remote to push to, and there must not be one.
+- Backups are done locally (e.g. `git bundle`) if needed — never to a public host.
 
 ## MCP Resource Map
 
