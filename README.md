@@ -141,6 +141,19 @@ Brain agents are read-only — they propose, the main session applies (see SCHEM
 | `bug-fixer` | dev | Reproduce → root-cause → fix + tests |
 | `implementer` | dev | Implement features from a plan/spec |
 
+## When to Upgrade Search
+
+The built-in `kb-search.py` (pure Python, zero deps, BM25 + recency + title/tag weighting) works perfectly up to ~200 pages. When you feel the limits, upgrade path:
+
+| Scale | Recommended | How |
+|---|---|---|
+| 0–200 pages | Built-in `kb-search.py` (already works) | Zero deps, instant |
+| 200–1000 | `qmd` (Karpathy's pick, MCP built-in) | `cargo install qmd && qmd index raw/pages` |
+| 1000+ | Meilisearch | `docker run meilisearch` + MCP |
+| Team / multi-user | Meilisearch Cloud / Typesense Cloud | Managed, auth, multi-tenant |
+
+No search engine required until you feel the need — `kb-search.py` works out of the box.
+
 ## Git Policy
 
 The knowledge base git repo is **local-only by default**. A safety hook blocks
@@ -164,6 +177,32 @@ repo and add it deliberately — never a public one.
 - **MCP access**: `.overmind/mcp-resource-map.yaml` defines resource URIs
   (`second-brain://wiki/index`, `second-brain://page/{path}`, ...) for agents that
   prefer MCP over plain file reads
+
+## Roadmap
+
+| Status | Item | Notes |
+|---|---|---|
+| ✅ | Core KB + 10 skills | Ingest, query, dream, session, update, plan, skill-add, auto-session, onboard, weekly-review |
+| ✅ | 6 subagents (2 brain + 4 dev) | kb-digest, kb-linter, researcher, code-reviewer, bug-fixer, implementer |
+| ✅ | Multi-agent wiring | OpenCode + Claude Code + generic AGENT-PROMPT |
+| ✅ | Safety hooks | JSON guard, path boundaries, secrets, push block, audit log, pre-edit backup |
+| ✅ | Automation | Cron dream sequence, dry-run, config tracking |
+| ✅ | Auto-save session | Stop hook → pending markers → kb-auto-session |
+| ✅ | Search (built-in) | kb-search.py — BM25 + recency, zero deps |
+| ✅ | Media ingestion | PDF (pdftotext), DOCX (pandoc), audio/video (whisper) |
+| ✅ | Batch ingest | inbox/ + media-to-text.sh |
+| ✅ | Export / publish | kb-stats.py, kb-query briefings, outputs/ |
+| ✅ | Telemetry | kb-stats.py dashboard (volume, hubs, problems, commits) |
+| ✅ | Conventional Commits | Policy in SCHEMA, history rewritten, skills emit feat:/docs:/chore: |
+| 🟡 | Real MCP server | Node/Go server for second-brain:// URIs |
+| 🟡 | qmd / Meilisearch integration | Optional upgrade when search needs scale |
+| 🟢 | Proactive profile refresh | Agent suggests /onboard refresh after 90 days |
+| 🟢 | Rich media in Obsidian | raw/assets/ attachment folder + image download |
+| 🟢 | Conflict resolution automation | Semantic diff + agent-assisted merge |
+| 🟢 | Search skill UX | Dedicated skill with Open/Summarize actions |
+| 🟢 | Growth metrics dashboard | Prettier kb-stats output |
+
+---
 
 ## Credits
 

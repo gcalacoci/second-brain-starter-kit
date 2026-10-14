@@ -298,10 +298,22 @@ modified by another agent or the user. Protocol:
 The knowledge base is a **local-only** git repository. No remote is configured and
 must never be added. Commits stay on this machine.
 
-- Each operation produces an atomic commit:
-  Conventional Commits — see the type table above.
-- **Never run `git push`.** There is no remote to push to, and there must not be one.
-- Backups are done locally (e.g. `git bundle`) if needed — never to a public host.
+### Conventional Commits (required)
+
+All commits use [Conventional Commits](https://www.conventionalcommits.org)
+format: `type: description` (imperative mood, no trailing period, ≤72 chars).
+
+| Type | Used for | Example |
+|---|---|---|
+| `feat` | New knowledge or capability: ingests, new pages, new skills | `feat: ingest karpathy llm wiki` |
+| `docs` | Recorded knowledge: query answers filed back, session notes, profile/goal/problem updates | `docs: session standup decisions` |
+| `chore` | Maintenance: dream runs, onboarding, config, setup | `chore: dream 2026-10-14` |
+| `fix` | Corrections to existing content (wrong claims, broken links, stale facts) | `fix: stale job title in profile` |
+| `refactor` | Restructuring pages without changing meaning (splits, merges, moves) | `refactor: split ml topic into two pages` |
+
+One type per commit; atomic commits per operation. **Never run `git push`** for
+this repo unless the user explicitly asks. Backups are local (e.g. `git bundle`)
+if needed — never to a public host.
 
 
 ## Automation (Dream Sequence)
