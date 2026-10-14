@@ -311,7 +311,7 @@ You are X, working on Y, goal is Z.
 
 **Local-only by default.** The repo has no remote and must never be pushed to a public host.
 
-- Each operation commits atomically: `ingest:`, `query:`, `dream:`, `session:`, `update:`, `skill:`
+- Each operation commits atomically: Conventional Commits — `feat:` (ingest, new pages/skills), `docs:` (filed answers, session notes, profile updates), `chore:` (dream runs, onboard), `fix:` (corrections), `refactor:` (restructures)
 - For off-machine backup: create a **private** repo deliberately (never public)
 
 ```bash

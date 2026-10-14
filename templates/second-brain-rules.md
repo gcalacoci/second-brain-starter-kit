@@ -23,7 +23,7 @@ All pages require id (kebab-case, unique), type, title, tags, created, updated, 
 Check wiki/processed.md before ingesting. If already listed, skip and inform the user.
 
 ## Commit messages
-Use atomic commits with prefixes: ingest:, query:, dream:, session:, skill:.
+Use Conventional Commits: feat: (ingest, new pages, new skills), docs: (filed answers, session notes, profile/goal updates), chore: (dream runs, onboarding), fix: (content corrections), refactor: (restructures).
 
 ## Safety
 Before editing sensitive files (.env, credentials), warn the user.

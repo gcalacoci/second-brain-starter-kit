@@ -29,7 +29,7 @@ or a free-text description of what changed)
    for the next query to trip over.
 4. **Confirm before writing identity.** Show the user the diff you intend to
    make. Never guess who they are.
-5. **Commit atomically.** `update: <what changed>` — local-only repo, never push.
+5. **Commit atomically.** Conventional Commits: `docs: <what changed>` — local-only repo, never push.
 
 ---
 
@@ -128,7 +128,7 @@ Wait for explicit confirmation. Adjust if they correct you.
 1. Append to `wiki/log.md`:
    `## [YYYY-MM-DD] update - <short description of the change>`
 2. Commit:
-   `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "update: <short description>"`
+   `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "docs: update <short description>"`
    (local-only repo, never push)
 
 ### Step 7: Summarize

@@ -347,11 +347,11 @@ if [[ ! -d .git ]]; then
 .env*
 EOF
     git add -A
-    git commit -q -m "init: second brain knowledge base (local-only git)"
+    git commit -q -m "chore: init second brain knowledge base (local-only git)"
     echo "  Git repo initialized (no remote — your knowledge stays on this machine)."
 else
     git add -A
-    git diff --cached --quiet || git commit -q -m "setup: merge starter kit files"
+    git diff --cached --quiet || git commit -q -m "chore: merge starter kit files"
     echo "  Existing repo detected — starter kit files merged and committed."
 fi
 

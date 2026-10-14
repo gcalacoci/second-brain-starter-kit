@@ -31,7 +31,7 @@ if [[ "${1:-}" == "--dry-run" ]]; then
   exit 0
 fi
 
-PROMPT='Run the Second Brain Dream Sequence now. Load the kb-dream skill at '"$KB_DIR"'/skills/kb-dream/SKILL.md and read '"$KB_DIR"'/SCHEMA.md first. Then execute the full flow: process new files in inbox/ (ingest flow), lint for contradictions, orphan pages, stale claims, and missing pages, update wiki/index.md, append to wiki/log.md, and update last-run in .overmind/config.yaml. Commit locally with message "dream: scheduled run". NEVER run git push. If the brain is empty or nothing is new, still log the run.'
+PROMPT='Run the Second Brain Dream Sequence now. Load the kb-dream skill at '"$KB_DIR"'/skills/kb-dream/SKILL.md and read '"$KB_DIR"'/SCHEMA.md first. Then execute the full flow: process new files in inbox/ (ingest flow), lint for contradictions, orphan pages, stale claims, and missing pages, update wiki/index.md, append to wiki/log.md, and update last-run in .overmind/config.yaml. Commit locally with conventional commit message "chore: dream scheduled run". NEVER run git push. If the brain is empty or nothing is new, still log the run.'
 
 {
   echo "=== dream start $(date -Is) via {{AGENT_NAME}} ==="

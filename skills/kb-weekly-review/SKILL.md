@@ -32,4 +32,4 @@ Weekly maintenance and improvement of the Second Brain at `{{WORKSPACE_DIR}}/`.
    - Stale pages
    - Inbox backlog
 7. Append to `wiki/log.md`: `## [YYYY-MM-DD] session - weekly review`
-8. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "session: weekly review <date>"` — local-only, never push.
+8. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "docs: weekly review <date>"` — local-only, never push.

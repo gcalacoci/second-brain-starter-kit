@@ -20,7 +20,7 @@ Capture the key takeaways of the current conversation into the Second Brain at `
 4. If the session produced knowledge that belongs in the brain (a decision, a new fact, a lesson), **update or create the affected content pages** in `raw/pages/` — don't leave the insight trapped in the session note.
 5. Update `wiki/index.md` for any new pages.
 6. Append to `wiki/log.md`: `## [YYYY-MM-DD] session - <short title>`
-7. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "session: <short title>"` — **local-only repo, never push.**
+7. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "docs: session <short title>"` — **local-only repo, never push.**
 
 ## Rules
 

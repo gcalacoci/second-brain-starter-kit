@@ -299,7 +299,7 @@ The knowledge base is a **local-only** git repository. No remote is configured a
 must never be added. Commits stay on this machine.
 
 - Each operation produces an atomic commit:
-  `ingest: <title>`, `query: <title>`, `dream: <title>`, `session: <title>`, `skill: add <id>`.
+  Conventional Commits — see the type table above.
 - **Never run `git push`.** There is no remote to push to, and there must not be one.
 - Backups are done locally (e.g. `git bundle`) if needed — never to a public host.
 

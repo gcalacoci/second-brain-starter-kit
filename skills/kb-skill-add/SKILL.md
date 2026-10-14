@@ -30,7 +30,7 @@ Agent discovery (already wired, do not re-do):
 4. Put supporting files (templates, scripts, references) in subdirectories of the skill folder — paths inside the skill are relative to its directory.
 5. ID rules: unique, lowercase kebab-case, 1-64 chars, matches the directory name. Prefix brain-specific skills with `kb-` to avoid collisions.
 6. Update `SCHEMA.md` — add the skill to the skills registry table (name, ID, one-line purpose).
-7. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "skill: add <skill id>"` — **local-only repo, never push.**
+7. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "feat: add skill <skill id>"` — **local-only repo, never push.**
 
 ## Rules
 

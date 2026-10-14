@@ -21,7 +21,7 @@ Ingest a new source into the Second Brain knowledge base at `{{WORKSPACE_DIR}}/`
 5. Update `wiki/index.md` — add new pages under the right category with a one-line summary.
 6. Append to `wiki/log.md`: `## [YYYY-MM-DD] ingest - <short title>`
 7. Add a row to `wiki/processed.md`.
-8. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "ingest: <short title>"` — the repo is **local-only, no remote. Never push.**
+8. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "feat: ingest <short title>"` — the repo is **local-only, no remote. Never push.**
 
 ## Rules
 

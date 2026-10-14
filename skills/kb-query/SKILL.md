@@ -16,7 +16,7 @@ Answer a question using the Second Brain knowledge base at `{{WORKSPACE_DIR}}/`.
 5. Present the answer to the user.
 6. If the user says "save that" (or similar): write the answer as a new topic page in `raw/pages/topics/` with full frontmatter (`agent: <your agent name>`), update `wiki/index.md`, and add a `related:` link from the pages it drew on.
 7. Append to `wiki/log.md`: `## [YYYY-MM-DD] query - <short title>` (or `query (saved)` if filed back).
-8. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "query: <short title>"` — **local-only repo, never push.**
+8. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "docs: query <short title>"` — **local-only repo, never push.**
 
 ## Rules
 

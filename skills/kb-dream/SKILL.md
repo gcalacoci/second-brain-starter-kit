@@ -19,7 +19,7 @@ Lint and health-check the Second Brain knowledge base at `{{WORKSPACE_DIR}}/`.
 8. **Check frontmatter integrity**: every page has required fields (`type`, `title`, `tags`, `created`, `updated`, `agent`).
 9. Append to `wiki/log.md`: `## [YYYY-MM-DD] dream - <summary of findings and fixes>`
 10. Update `last-run` in `.overmind/config.yaml` (dream section) to today.
-11. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "dream: health check <YYYY-MM-DD>"` — **local-only repo, never push.**
+11. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "chore: dream health check <YYYY-MM-DD>"` — **local-only repo, never push.**
 
 
 ## Delegation (recommended at scale)
