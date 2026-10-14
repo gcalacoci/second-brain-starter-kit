@@ -197,8 +197,8 @@ repo and add it deliberately — never a public one.
 | ✅ | Export / publish | kb-stats.py, kb-query briefings, outputs/ |
 | ✅ | Telemetry | kb-stats.py dashboard (volume, hubs, problems, commits) |
 | ✅ | Conventional Commits | Policy in SCHEMA, history rewritten, skills emit feat:/docs:/chore: |
-| 🟡 | Real MCP server | Node/Go server for second-brain:// URIs |
-| 🟡 | qmd / Meilisearch integration | Optional upgrade when search needs scale |
+| 🟡 | Real MCP server | Optional: deploy `mcp_server.py` with `uv add mcp` |
+| 🟡 |  Optional upgrade when search needs scale | Optional upgrade when search needs scale |
 | 🟢 | Proactive profile refresh | Agent suggests /onboard refresh after 90 days |
 | 🟢 | Rich media in Obsidian | raw/assets/ attachment folder + image download |
 | 🟢 | Conflict resolution automation | Semantic diff + agent-assisted merge |
