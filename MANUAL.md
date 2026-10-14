@@ -400,7 +400,8 @@ checklist, the command→skill map, and the hard rules.
 ### Programmatic access (MCP, optional)
 
 Agents with MCP support can query the brain without touching the filesystem,
-using the URI templates in `.overmind/mcp-resource-map.yaml`:
+using the URI templates exposed by the Python MCP server
+(`~/prj/second-brain/scripts/mcp_server.py`):
 
 | URI | Returns |
 |---|---|
@@ -408,7 +409,12 @@ using the URI templates in `.overmind/mcp-resource-map.yaml`:
 | `second-brain://wiki/index` | Table of contents |
 | `second-brain://page/{path}` | A specific content page |
 | `second-brain://pages/tag/{tag}` | All pages with a tag |
+| `second-brain://pages/type/{t}` | All pages of a type |
+| `second-brain://search?q={q}` | Search results (BM25 + recency) |
+| `second-brain://config` | `.overmind/config.yaml` |
 
+**To enable:** `pip install mcp` then the server runs via stdio transport.
+Any MCP-capable agent can add the server and query these resources.
 This is an acceleration, not a requirement — plain file reads always work.
 
 ---

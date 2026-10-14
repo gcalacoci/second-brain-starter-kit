@@ -163,10 +163,13 @@ repo and add it deliberately — never a public one.
 ## Requirements
 
 - Git
+- Python 3.10+ (for hooks, scripts, and MCP server)
+- **uv** (recommended — `curl -LsSf https://astral.sh/uv/install.sh | sh`)
 - One or more agents: [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
   and/or [OpenCode](https://opencode.ai)
 - Optional: [Obsidian](https://obsidian.md) for browsing the wiki (graph view is
   excellent for seeing the shape of your brain)
+- Optional: `uv add mcp` — enables the Second Brain MCP server (`mcp_server.py`)
 
 ## Customization
 

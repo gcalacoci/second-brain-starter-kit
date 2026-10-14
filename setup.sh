@@ -37,6 +37,41 @@ else
     echo "  - opencode not found (optional — install from https://opencode.ai)"
 fi
 
+# --- MCP Python package (for the Second Brain MCP server) ---
+if python3 -c "import mcp" 2>/dev/null; then
+    echo "  ok mcp (python package)"
+else
+    echo "  - mcp python package — not found"
+    if command -v pip3 >/dev/null 2>&1; then
+        install_with_prompt "mcp" "mcp" "pip3 install mcp" || true
+    elif command -v pip >/dev/null 2>&1; then
+        install_with_prompt "mcp" "mcp" "pip install mcp" || true
+    else
+        echo "    pip not found — install python3-pip and re-run"
+        MISSING=1
+    fi
+fi
+
+# --- uv (Python package manager, recommended for MCP) ---
+if command -v uv >/dev/null 2>&1; then
+    echo "  ok uv ($(uv --version | head -c 20))"
+else
+    echo "  - uv — not found (recommended for Python/MCP)"
+    if command -v curl >/dev/null 2>&1; then
+        echo "    Install with: curl -LsSf https://astral.sh/uv/install.sh | sh"
+        read -p "    Install uv now? [Y/n] " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+            if [[ -f "$HOME/.local/bin/uv" ]]; then
+                export PATH="$HOME/.local/bin:$PATH"
+            fi
+        fi
+    else
+        echo "    curl not found — install curl first, then: curl -LsSf https://astral.sh/uv/install.sh | sh"
+    fi
+fi
+
 if [[ $MISSING -eq 1 ]]; then
     echo ""
     echo "Missing required tools. Install them and re-run ./setup.sh"

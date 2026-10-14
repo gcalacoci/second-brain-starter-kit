@@ -125,6 +125,23 @@ Mid-session, if the user says something contradicting their profile (e.g., "I'm 
 └── agents/                ← subagent definitions (kb-digest, kb-linter + dev agents)
 ```
 
+## MCP Server (optional)
+
+If `pip install mcp` is installed, the brain runs an MCP server at
+`~/prj/second-brain/scripts/mcp_server.py` exposing:
+
+| URI | Returns |
+|---|---|
+| `second-brain://schema` | The operating manual |
+| `second-brain://wiki/index` | Table of contents |
+| `second-brain://page/{path}` | A specific content page |
+| `second-brain://pages/tag/{tag}` | All pages with a tag |
+| `second-brain://pages/type/{t}` | All pages of a type |
+| `second-brain://search?q={q}` | Search results (BM25 + recency) |
+| `second-brain://config` | `.overmind/config.yaml` |
+
+MCP is an acceleration, not a requirement — plain file reads always work.
+
 ## Delegation
 
 For bulk reading (long sources) or full-KB sweeps, delegate to the read-only
