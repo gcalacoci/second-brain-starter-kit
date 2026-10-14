@@ -1,11 +1,11 @@
 ---
-name: KB Weekly Review
+name: kb-weekly-review
 description: Run a weekly review of the Second Brain knowledge base. Identify entries with vague tags, duplicate content, missing cross-links, and outdated info. Use when the user says "weekly review" or at the scheduled Friday time.
 ---
 
 # KB Weekly Review
 
-Weekly maintenance and improvement of the Second Brain at `{{WORKSPACE_DIR}}/`.
+Weekly maintenance and improvement of the Second Brain at `~/prj/second-brain/`.
 
 ## Steps
 
@@ -32,4 +32,4 @@ Weekly maintenance and improvement of the Second Brain at `{{WORKSPACE_DIR}}/`.
    - Stale pages
    - Inbox backlog
 7. Append to `wiki/log.md`: `## [YYYY-MM-DD] session - weekly review`
-8. Commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "docs: weekly review <date>"` — local-only, never push.
+8. Commit: `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "docs: weekly review <date>"` — local-only, never push.

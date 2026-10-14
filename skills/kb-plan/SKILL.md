@@ -1,12 +1,12 @@
 ---
-name: KB Plan
+name: kb-plan
 description: Phase-wise build for the Second Brain. Use when building new features, large rollouts, or architectural changes. Follow the gates: Explore, Discover, Design, Approve, Implement, Verify.
 allowed-tools: [Read, Write, Edit, Bash, Web, AskUserQuestion]
 ---
 
 # /kb-plan — Second Brain Build Workflow
 
-A gated, phased workflow for building changes to your Second Brain at {{WORKSPACE_DIR}}/. Starts small, expands safely.
+A gated, phased workflow for building changes to your Second Brain at ~/prj/second-brain/. Starts small, expands safely.
 
 ---
 

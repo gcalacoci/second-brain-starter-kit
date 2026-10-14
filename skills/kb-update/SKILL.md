@@ -1,5 +1,5 @@
 ---
-name: KB Update
+name: kb-update
 description: Update the user's profile, goals, or problems in the Second Brain when their context changes — new job, role change, department move, new focus, achieved or abandoned goal. Use when the user says "update my profile", "I changed jobs", "I got the job", "I moved to a new team", "my goals changed", "I'm no longer working on X", or otherwise contradicts what the brain knows about them.
 allowed-tools: Read, Write, Edit, Bash, AskUserQuestion
 argument-hint: "[profile|goals|problems|full] — or just describe what changed"
@@ -128,7 +128,7 @@ Wait for explicit confirmation. Adjust if they correct you.
 1. Append to `wiki/log.md`:
    `## [YYYY-MM-DD] update - <short description of the change>`
 2. Commit:
-   `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "docs: update <short description>"`
+   `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "docs: update <short description>"`
    (local-only repo, never push)
 
 ### Step 7: Summarize

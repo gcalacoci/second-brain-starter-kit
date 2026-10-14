@@ -1,5 +1,5 @@
 ---
-name: Onboard Second Brain
+name: onboard
 description: Guided setup for the Second Brain knowledge base. Walks through establishing the KB's focus, mental models, goals, and initial seeds. Use when the user starts fresh or wants to redefine the brain's purpose. Run this in the first session after setup or when changing focus.
 allowed-tools: Read, Write, Edit, Bash, AskUserQuestion
 argument-hint: "[focus|resume]"
@@ -26,7 +26,7 @@ what they care about. Don't rush — each step embeds principles for future use.
 
 ## Before Starting
 
-1. Read `../SCHEMA.md` from the shared KB root (`{{WORKSPACE_DIR}}/`)
+1. Read `../SCHEMA.md` from the shared KB root (`~/prj/second-brain/`)
 2. Check for `state/onboard-progress.yaml` — if it exists, resume
 3. Check if `knowledge/` folder exists with content — if so, summary first
 
@@ -97,7 +97,7 @@ focus: "whatever they chose"
 Future transitions (new job, team change, role change) are appended here by the
 `kb-update` skill — never overwriting the current state. See `skills/kb-update/SKILL.md`.
 
-Save, commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "chore: onboard: step 1 - focus defined"`
+Save, commit: `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "chore: onboard: step 1 - focus defined"`
 
 ---
 
@@ -157,7 +157,7 @@ new piece of knowledge can be tested against them.
 
 Write individual `knowledge/problems/01-*.md` files for each.
 
-Save, commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "chore: onboard: step 2 - mental models defined"`
+Save, commit: `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "chore: onboard: step 2 - mental models defined"`
 
 ---
 
@@ -213,7 +213,7 @@ last_reviewed: YYYY-MM-DD
 later `completed`/`abandoned` with a `closed:` date via the `kb-update` skill).
 The `## Change Log` is append-only.
 
-Save, commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "chore: onboard: step 3 - goals defined"`
+Save, commit: `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "chore: onboard: step 3 - goals defined"`
 
 ---
 
@@ -268,7 +268,7 @@ Welcome to your Second Brain. This is the table of contents for Day 1.
 
 Save, commit.
 
-Save, commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "chore: onboard: step 4 - seeded content"`
+Save, commit: `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "chore: onboard: step 4 - seeded content"`
 
 ---
 
@@ -298,7 +298,7 @@ files_written:
   - knowledge/topics/getting-started.md
 ```
 
-Final commit: `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "chore: onboard: complete"`
+Final commit: `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "chore: onboard: complete"`
 
 Delete progress file and commit cleanup.
 
