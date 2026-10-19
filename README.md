@@ -41,10 +41,11 @@ cd second-brain-starter-kit
 The script asks for your name and where to put the workspace
 (default: `~/prj/second-brain`), then:
 
-1. Creates the workspace: `raw/`, `wiki/`, `skills/`, `inbox/`, `outputs/`, `knowledge/`
-2. Installs the shared schema (`SCHEMA.md`) and the skill library
-3. Wires agent discovery: OpenCode `skills` config entry + Claude Code symlink
-4. Initializes a **local-only** git repo (your knowledge never leaves the machine
+1. Creates the workspace: `raw/`, `wiki/`, `skills/`, `inbox/`, `outputs/`, `knowledge/`, `scripts/`
+2. Installs the shared schema (`SCHEMA.md`), the skill library, and the utility scripts
+3. Wires agent discovery: OpenCode `skills` config entry + one Claude Code symlink per skill
+4. Optionally registers the MCP server in Claude Desktop and/or Claude Code (needs uv)
+5. Initializes a **local-only** git repo (your knowledge never leaves the machine
    unless you explicitly add a private remote)
 
 Then start your first session:
@@ -107,7 +108,7 @@ The same brain is operated by any agent:
 
 | Agent | How it finds the brain | How it finds the skills |
 |---|---|---|
-| **Claude Code** | `~/prj/CLAUDE.md` shim → `SCHEMA.md`; `~/.claude/rules/second-brain-rules.md` | `~/.claude/skills/second-brain` symlink |
+| **Claude Code** | `~/prj/CLAUDE.md` shim → `SCHEMA.md`; `~/.claude/rules/second-brain-rules.md` | one `~/.claude/skills/<skill-id>` symlink per skill |
 | **OpenCode** | `~/.opencode/instructions.md` shim → `SCHEMA.md` | `skills: ["~/prj/second-brain/skills"]` in `~/.config/opencode/opencode.json` |
 | **Any other agent** | "Read `~/prj/second-brain/SCHEMA.md` and follow it" | Read a `SKILL.md` directly |
 
@@ -163,13 +164,15 @@ repo and add it deliberately — never a public one.
 ## Requirements
 
 - Git
-- Python 3.10+ (for hooks, scripts, and MCP server)
-- **uv** (recommended — `curl -LsSf https://astral.sh/uv/install.sh | sh`)
+- Python 3.10+ (for hooks and scripts)
+- **uv** (recommended — `curl -LsSf https://astral.sh/uv/install.sh | sh`).
+  Required for the MCP server, which is launched via
+  `uv run --no-project --with "mcp>=1.2"` — uv resolves the `mcp` package on
+  demand, no manual pip install needed.
 - One or more agents: [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
   and/or [OpenCode](https://opencode.ai)
 - Optional: [Obsidian](https://obsidian.md) for browsing the wiki (graph view is
   excellent for seeing the shape of your brain)
-- Optional: `uv add mcp` — enables the Second Brain MCP server (`mcp_server.py`)
 
 ## Customization
 
@@ -177,9 +180,19 @@ repo and add it deliberately — never a public one.
 - **Focus/scope**: re-run `/onboard` anytime to redefine what the brain is for
 - **New skills**: say `add a skill` — the `kb-skill-add` skill walks the agent
   through creating it, registering it in `SCHEMA.md`, and wiring discovery
-- **MCP access**: `.overmind/mcp-resource-map.yaml` defines resource URIs
-  (`second-brain://wiki/index`, `second-brain://page/{path}`, ...) for agents that
-  prefer MCP over plain file reads
+- **MCP access**: the Python MCP server (`scripts/mcp_server.py`, launched via
+  uv) exposes 8 tools — `get_schema`, `get_index`, `search`, `read_file`,
+  `list_files`, `list_by_tag`, `list_by_type`, `write_inbox` — see
+  SCHEMA.md → MCP Server
+
+## Merge Mode (re-running setup)
+
+Re-running `./setup.sh` on an existing workspace is **non-destructive**: your
+pages, sources and knowledge files are always kept. Where a kit file would
+overwrite one you've edited, the new version is written next to yours as
+`<file>.kit-new` and listed at the end of the run for you to merge manually.
+Setup never stages or commits anything on your behalf — review with
+`git -C <workspace> status` and commit what you want to keep.
 
 ## Roadmap
 
@@ -197,8 +210,8 @@ repo and add it deliberately — never a public one.
 | ✅ | Export / publish | kb-stats.py, kb-query briefings, outputs/ |
 | ✅ | Telemetry | kb-stats.py dashboard (volume, hubs, problems, commits) |
 | ✅ | Conventional Commits | Policy in SCHEMA, history rewritten, skills emit feat:/docs:/chore: |
-| 🟡 | Real MCP server | Optional: deploy `mcp_server.py` with `uv add mcp` |
-| 🟡 |  Optional upgrade when search needs scale | Optional upgrade when search needs scale |
+| 🟡 | MCP server (Python, uv-launched) | `scripts/mcp_server.py` — register via setup Phase 2b |
+| 🟡 | qmd / Meilisearch integration | Optional upgrade when search needs scale |
 | 🟢 | Proactive profile refresh | Agent suggests /onboard refresh after 90 days |
 | 🟢 | Rich media in Obsidian | raw/assets/ attachment folder + image download |
 | 🟢 | Conflict resolution automation | Semantic diff + agent-assisted merge |

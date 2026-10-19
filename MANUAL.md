@@ -389,7 +389,8 @@ The same brain is operated by any agent:
 
 | Agent | How it finds the brain | How it finds skills |
 |---|---|---|
-| **Claude Code** | `~/prj/CLAUDE.md` shim → `SCHEMA.md` | `~/.claude/skills/second-brain` symlink |
+| **Claude Code** | `~/prj/CLAUDE.md` shim → `SCHEMA.md` | one `~/.claude/skills/<skill-id>` symlink per skill |
+| **Claude Desktop** | MCP server entry in its config (Phase 2b) | via the MCP `list_files` / `read_file` tools |
 | **OpenCode** | `~/.opencode/instructions.md` shim | `skills` entry in `~/.config/opencode/opencode.json` |
 | **Any other** | "Read `~/prj/second-brain/SCHEMA.md` and follow it" — or paste `AGENT-PROMPT.md` | Read `SKILL.md` files directly |
 
@@ -399,22 +400,47 @@ checklist, the command→skill map, and the hard rules.
 
 ### Programmatic access (MCP, optional)
 
-Agents with MCP support can query the brain without touching the filesystem,
-using the URI templates exposed by the Python MCP server
-(`~/prj/second-brain/scripts/mcp_server.py`):
+A Python MCP server (`~/prj/second-brain/scripts/mcp_server.py`) lets MCP-capable
+clients (Claude Desktop, Claude Code) search and read the brain autonomously and
+capture notes into `inbox/`. It is launched via uv, which resolves the `mcp`
+package on demand — no manual pip install:
 
-| URI | Returns |
+```
+uv run --no-project --with "mcp>=1.2" python ~/prj/second-brain/scripts/mcp_server.py
+```
+
+The workspace root comes from the `SECOND_BRAIN_DIR` env var (falls back to
+`~/prj/second-brain`). Setup Phase 2b registers the server for you:
+
+- **Claude Desktop**: merges `mcpServers.second-brain` into
+  `~/.config/Claude/claude_desktop_config.json` (Linux) or
+  `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS),
+  backing up your existing config first. Restart Claude Desktop completely
+  after registration.
+- **Claude Code**: `claude mcp add --scope user second-brain ...`
+
+**Tools exposed:**
+
+| Tool | What it does |
 |---|---|
-| `second-brain://schema` | The operating manual |
-| `second-brain://wiki/index` | Table of contents |
-| `second-brain://page/{path}` | A specific content page |
-| `second-brain://pages/tag/{tag}` | All pages with a tag |
-| `second-brain://pages/type/{t}` | All pages of a type |
-| `second-brain://search?q={q}` | Search results (BM25 + recency) |
-| `second-brain://config` | `.overmind/config.yaml` |
+| `get_schema` | Return SCHEMA.md (the operating manual) |
+| `get_index` | Return wiki/index.md (table of contents) |
+| `search` | Ranked search over pages, knowledge, session notes and outputs |
+| `read_file` | Read one file inside the workspace (1 MB cap) |
+| `list_files` | List .md files under a workspace directory |
+| `list_by_tag` | Pages whose frontmatter tags include a tag |
+| `list_by_type` | Pages of a type (topic / entity / source-summary). Argument: `type` |
+| `write_inbox` | Capture a note into inbox/ (the only write) |
 
-**To enable:** `pip install mcp` then the server runs via stdio transport.
-Any MCP-capable agent can add the server and query these resources.
+**Safety:** reads are jailed to the workspace (path escapes, `.git/`, logs and
+secret patterns are refused; 1 MB cap). `write_inbox` accepts only kebab-case
+`.md` filenames (argument: `filename`), date-prefixes them into `inbox/` using
+local time, never overwrites, and caps content at 200 KB.
+
+**To verify the server:** restart Claude Desktop, open a conversation, and ask
+"search my brain for X" — the model should call `search` on its own. Or check
+`claude mcp list` for Claude Code.
+
 This is an acceleration, not a requirement — plain file reads always work.
 
 ---
@@ -436,6 +462,12 @@ cd second-brain-starter-kit
 Merge mode: existing content (all your pages, sources, knowledge files) is kept;
 only missing scaffolding (skills, shims, hooks, configs) is added. Your agent
 wiring (symlinks, config entries) is rebuilt for the new machine.
+
+**Merge is non-destructive.** Where the kit would overwrite a file you've
+edited, it writes the new version next to yours as `<file>.kit-new` and lists
+them at the end of the run — you merge manually and decide what to keep. Setup
+never stages or commits anything in merge mode; review with `git status` and
+commit yourself.
 
 **Upgrading the starter kit later** works the same way: pull the latest template,
 re-run `./setup.sh`, confirm merge — you get new/updated skills and templates
@@ -535,7 +567,7 @@ WHERE file.mtime < date(today) - dur(90 days)
 | Problem | Fix |
 |---|---|
 | Agent doesn't know the brain exists | Paste the agent prompt (see `AGENT-PROMPT.md`) |
-| Skills not loading | Check symlinks / config entries (see Multi-Agent table) |
+| Skills not loading | Claude Code needs one symlink per skill (`~/.claude/skills/<skill-id>`) — re-run `./setup.sh` to rebuild them. OpenCode needs the `skills` entry in its config (see Multi-Agent table) |
 | "processed.md says X is ingested but I don't see it" | Check `raw/sources/` — the raw file is the source of truth |
 | Profile feels stale | Say "update my profile" or run `weekly review` |
 | Too many orphan pages | Run `dream sequence` — it links or flags them |

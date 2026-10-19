@@ -127,7 +127,7 @@ Mid-session, if the user says something contradicting their profile (e.g., "I'm 
 
 ## MCP Server (optional)
 
-If `pip install mcp` is installed, the brain runs an MCP server at
+If `uv` is installed, the brain runs an MCP server at
 `~/prj/second-brain/scripts/mcp_server.py` exposing:
 
 | URI | Returns |
