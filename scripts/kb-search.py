@@ -42,6 +42,7 @@ def main():
         os.path.join(root, "raw", "pages"),
         os.path.join(root, "knowledge"),
         os.path.join(root, "raw", "session-notes"),
+        os.path.join(root, "outputs"),
     ]
     results = []
     for d in search_dirs:

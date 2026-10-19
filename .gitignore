@@ -15,3 +15,4 @@ Thumbs.db
 
 # Obsidian workspace state (machine-specific — do not commit)
 .obsidian/
+__pycache__/
