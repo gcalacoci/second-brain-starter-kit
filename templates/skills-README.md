@@ -5,7 +5,7 @@ This directory is the single source of truth for skills shared across agents.
 ## Discovery
 
 - OpenCode: `skills: ["~/prj/second-brain/skills"]` in `~/.config/opencode/opencode.json`
-- Claude Code: `~/.claude/skills/second-brain` symlink → this directory
+- Claude Code: one `~/.claude/skills/<skill-id>` symlink per skill directory
 - Other agents: read the SKILL.md files directly
 
 ## Conventions

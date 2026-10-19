@@ -22,9 +22,21 @@ operating manual every agent follows.
 - `dream sequence` — lint + ingest new inbox files
 - `weekly review` — maintenance report
 
+## Wiki
+
+`wiki/` is navigation + bookkeeping only — it contains exactly three files,
+nothing else:
+
+- `index.md` — table of contents for all brain pages (agent-maintained)
+- `log.md` — chronological activity log (append-only)
+- `processed.md` — registry of ingested raw files (the dedup source of truth)
+
+All content lives in `raw/pages/`, never in `wiki/`. The agent keeps the index
+and log current on every operation; you never edit these by hand.
+
 ## Agents
 
-- Claude Code: sees `../CLAUDE.md` shim + `~/.claude/skills/second-brain` symlink
+- Claude Code: sees `../CLAUDE.md` shim + one `~/.claude/skills/<skill-id>` symlink per skill
 - OpenCode: sees `~/.opencode/instructions.md` shim + skills config entry
 - Anything else: "Read SCHEMA.md and follow it"
 
