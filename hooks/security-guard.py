@@ -66,8 +66,16 @@ def block(tool: str, reason: str, context: str = "") -> None:
     sys.exit(2)
 
 
+# The agent's working directory (payload "cwd"), set in main(). Relative paths are
+# the agent's, so they resolve against it, not against this hook's own process cwd.
+AGENT_CWD = ""
+
+
 def resolve(p: str) -> str:
-    return str(Path(os.path.expanduser(p)).resolve())
+    path = Path(os.path.expanduser(p))
+    if not path.is_absolute() and AGENT_CWD:
+        path = Path(AGENT_CWD) / path
+    return str(path.resolve())
 
 
 def inside(path: str, roots: list) -> bool:
@@ -96,17 +104,51 @@ def looks_like_path(token: str) -> bool:
     return token.startswith("/") or token.startswith("~") or token.startswith(".")
 
 
+GIT_OPTS_WITH_VALUE = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path"}
+
+
+def git_push_args(tokens: list):
+    """The arguments after `push` if these tokens run `git push`, else None.
+    Skips git's global options (`git -C dir push`), so `git stash push` or a
+    commit message containing "push" is not a push."""
+    if "git" not in tokens:
+        return None
+    i = tokens.index("git") + 1
+    while i < len(tokens) and tokens[i].startswith("-"):
+        i += 2 if tokens[i] in GIT_OPTS_WITH_VALUE else 1
+    if i < len(tokens) and tokens[i] == "push":
+        return tokens[i + 1:]
+    return None
+
+
+def mentions_brain(cmd: str) -> bool:
+    """The brain path as a whole path in the command, not as a prefix of a
+    sibling folder (e.g. second-brain-starter-kit next to second-brain)."""
+    if not KB_ROOT or KB_ROOT.startswith("{{"):
+        return False
+    return bool(re.search(re.escape(resolve(KB_ROOT)) + r"(?=$|[/\s'\";&|)])", cmd))
+
+
+def is_force_push(args: list) -> bool:
+    for a in args:
+        if a.startswith("--force") or a.startswith("+"):
+            return True
+        if a.startswith("-") and not a.startswith("--") and "f" in a[1:]:
+            return True
+    return False
+
+
 def check_bash(tool: str, cmd: str, cwd: str) -> None:
     # --- Brain local-only guarantee: no push from inside the brain, ever ---
-    # Covers: cwd inside the brain, `cd <brain> && git push`, and full paths
-    if re.search(r"\bgit\b\s+.*\bpush\b", cmd):
-        kb_resolved = resolve(KB_ROOT) if KB_ROOT and not KB_ROOT.startswith("{{") else ""
-        if (cwd and in_brain(cwd)) or (kb_resolved and kb_resolved in cmd):
+    # Covers: cwd inside the brain, `cd <brain> && git push`, `git -C <brain> push`
+    pushes = [a for a in (git_push_args(tokenize(s.strip())) for s in SHELL_OP_RE.split(cmd))
+              if a is not None]
+    if pushes:
+        if (cwd and in_brain(cwd)) or mentions_brain(cmd):
             block(tool, "LOCAL-ONLY: The Second Brain repo must never be pushed. "
                         "Push is a deliberate manual action in your own terminal.", cmd)
-
-    if re.search(r"git\s+push\s+.*(-f\b|--force\b)", cmd):
-        block(tool, "SECURITY: Force-push is blocked", cmd)
+        if any(is_force_push(a) for a in pushes):
+            block(tool, "SECURITY: Force-push is blocked", cmd)
 
     if re.search(r"git\s+add\s", cmd):
         if re.search(r"\.(env|key|pem|secret|keystore)\b|\.env\.", cmd, re.IGNORECASE):
@@ -173,6 +215,9 @@ def main() -> None:
     tool = data.get("tool_name", "")
     inp = data.get("tool_input", {})
     cwd = data.get("cwd", "")
+    global AGENT_CWD
+    if isinstance(cwd, str) and os.path.isabs(cwd):
+        AGENT_CWD = cwd
 
     if tool in PASSTHROUGH_TOOLS or tool.startswith("mcp__"):
         sys.exit(0)

@@ -66,9 +66,10 @@ MAX_CONTENT_BYTES = MAX_WRITE_BYTES - INBOX_HEADER_SIZE
 # Protected locations, applied to the path *relative* to KB so a workspace
 # living under a directory called ".envs" doesn't trip the secret patterns.
 # - .git/ and .overmind/logs/ as directory components (any depth)
-# - file *names* matching .env*, *.secret, *.key, *.pem
+# - file *names* .env, .envrc and .env.<anything> (not .environment-setup.md or
+#   .envs), *.secret, *.key, *.pem
 DENY_DIR_RE = re.compile(r"(^|/)(\.git|\.overmind/logs)(/|$)")
-DENY_FILE_RE = re.compile(r"(^|/)(\.env[^/]*|[^/]*\.secret|[^/]*\.key|[^/]*\.pem)$", re.IGNORECASE)
+DENY_FILE_RE = re.compile(r"(^|/)(\.env(rc|\.[^/]*)?|[^/]*\.secret|[^/]*\.key|[^/]*\.pem)$", re.IGNORECASE)
 
 
 def safe_path(rel: str) -> Path:
