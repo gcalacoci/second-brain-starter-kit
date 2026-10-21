@@ -117,6 +117,7 @@ class MediaToTextTests(unittest.TestCase):
         env["TMPDIR"] = str(self.tmpdir)
         env["CALL_LOG"] = str(self.log)
         env.pop("WHISPER_MODEL", None)
+        env.pop("WHISPER_LANG", None)
         if extra_env:
             env.update(extra_env)
         return subprocess.run(
@@ -158,8 +159,21 @@ class MediaToTextTests(unittest.TestCase):
         self.assertEqual(args[args.index("-f") + 1], str(source))
         self.assertIn("-otxt", args)
         self.assertEqual(args[args.index("-of") + 1], str(self.out / "talk"))
+        # detect the language: whisper-cli alone assumes English and mistranslates
+        self.assertEqual(args[args.index("-l") + 1], "auto")
         self.assertEqual(self.call_args("ffmpeg"), [])
         self.assertEqual(self.call_args("whisper"), [])
+
+    def test_whisper_lang_overrides_detection(self):
+        self.write_fake("whisper-cli", WHISPER_CLI_BODY)
+        self.write_model()
+        source = self.make_media("talk.mp3")
+
+        result = self.run_script(source, {"WHISPER_LANG": "it"})
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        args = self.call_args("whisper-cli")[0]
+        self.assertEqual(args[args.index("-l") + 1], "it")
 
     def test_mp4_is_converted_and_temp_wav_is_removed(self):
         self.write_fake("whisper-cli", WHISPER_CLI_BODY)

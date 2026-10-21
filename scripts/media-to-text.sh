@@ -11,6 +11,7 @@
 #   pandoc                     — DOCX
 #   whisper-cli (whisper.cpp)  — audio/video transcription (offline; needs a model:
 #                                $WHISPER_MODEL or ~/.local/share/whisper.cpp/models/ggml-base.bin)
+#                                language: $WHISPER_LANG, default auto (whisper-cli alone assumes English)
 #   ffmpeg                     — converts other media formats to wav for whisper-cli
 #   whisper                    — audio/video transcription (fallback)
 set -uo pipefail
@@ -75,7 +76,7 @@ case "$EXT_LC" in
           ;;
       esac
 
-      whisper-cli -m "$MODEL" -f "$INPUT" -otxt -of "$OUTDIR/$STEM"
+      whisper-cli -m "$MODEL" -l "${WHISPER_LANG:-auto}" -f "$INPUT" -otxt -of "$OUTDIR/$STEM"
       STATUS=$?
       [[ -n "$TMP_WAV" ]] && rm -f "$TMP_WAV"
       if [[ $STATUS -eq 0 ]]; then
