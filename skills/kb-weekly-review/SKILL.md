@@ -24,6 +24,13 @@ Weekly maintenance and improvement of the Second Brain at `~/prj/second-brain/`.
 3. Find duplicate content: pages with similar titles or summaries.
 4. Identify orphan pages in `raw/pages/` not listed in `wiki/index.md`.
 5. Check `inbox/` for unprocessed files older than 7 days.
+5b. **Memory audit** (Claude Code; skip if the agent has no auto-memory): find the
+   memory folder (`autoMemoryDirectory` in `~/.claude/settings.json`, else
+   `~/.claude/projects/*/memory/`). Check: `MEMORY.md` ≤ 120 lines (only the first 200
+   load), index lines match the files, no dangling `[[links]]`, no memory that repeats
+   a rule in `~/.claude/rules/`, state/todo memories not older than the latest session
+   note, the same fact not saved in several per-folder memories. Propose merges, trims
+   and promotions to rules; the user decides, then apply them.
 6. Produce a report in `outputs/reports/YYYY-MM-DD-weekly-review.md` with:
    - **Identity staleness** (profile/goals `last_reviewed`, parked-problem candidates)
    - Pages needing tags
@@ -31,5 +38,6 @@ Weekly maintenance and improvement of the Second Brain at `~/prj/second-brain/`.
    - Duplicates
    - Stale pages
    - Inbox backlog
+   - Memory audit
 7. Append to `wiki/log.md`: `## [YYYY-MM-DD] session - weekly review`
 8. Commit: `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "docs: weekly review <date>"` — local-only, never push.

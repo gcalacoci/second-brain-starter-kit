@@ -328,7 +328,7 @@ sed -e "s|{{WORKSPACE_DIR}}|$WORKSPACE_DIR|g" \
     "$SCRIPT_DIR/templates/second-brain-rules.md" > "$RULES_TMP"
 install_kit_file "$RULES_TMP" "$HOME/.claude/rules/second-brain-rules.md"
 rm -f "$RULES_TMP"
-echo "  Claude Code path-scoped rules installed at ~/.claude/rules/second-brain-rules.md"
+echo "  Claude Code rules installed at ~/.claude/rules/second-brain-rules.md"
 
 # Claude Code skill discovery: one symlink per skill.
 # Claude Code only discovers ~/.claude/skills/<skill-id>/SKILL.md — a single

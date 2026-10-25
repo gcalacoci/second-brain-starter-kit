@@ -1,11 +1,13 @@
 ---
 name: Second Brain Rules
-path: '{{WORKSPACE_DIR}}/**'
 ---
 
-# Second Brain Rules — Path-Scoped
+# Second Brain Rules
 
 These rules apply only when working inside {{WORKSPACE_DIR}}/.
+<!-- Loaded in every session: no `paths:` key on purpose. For user-level rules Claude Code
+     matches `paths:` against the session's start folder, so an absolute workspace glob
+     never matches. The sentence above limits the scope. -->
 
 ## Hard rules
 - Never edit files in raw/sources/. If a correction is needed, create a new version with a new name.

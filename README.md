@@ -114,6 +114,10 @@ The same brain is operated by any agent:
 
 `setup.sh` wires all of this automatically and tells you what it changed.
 
+The rules file loads in every Claude Code session, wherever you start it. Its text
+limits it to the workspace; a `paths:` glob can't, because for user-level rules Claude
+Code matches it against the folder the session started in.
+
 ## Skills Included
 
 | Skill | Purpose |
@@ -122,7 +126,8 @@ The same brain is operated by any agent:
 | `kb-query` | Answer from the brain with citations; optionally file the answer back |
 | `kb-dream` | The Dream Sequence: ingest new files + full lint (contradictions, orphans, stale) |
 | `kb-session-capture` | Save chat takeaways as structured session notes |
-| `kb-weekly-review` | Weekly maintenance report: vague tags, duplicates, orphans, inbox backlog |
+| `kb-auto-session` | Capture pending sessions flagged by the Stop hook (or run by the Dream Sequence) |
+| `kb-weekly-review` | Weekly maintenance report: vague tags, duplicates, orphans, inbox backlog, memory audit |
 | `kb-update` | Update profile/goals when your context changes (change log + cascade) |
 | `kb-plan` | Gated 6-phase workflow for building brain features (explore → verify) |
 | `kb-skill-add` | Meta-skill: add a new shared skill correctly |
@@ -184,6 +189,12 @@ repo and add it deliberately — never a public one.
   uv) exposes 8 tools — `get_schema`, `get_index`, `search`, `read_file`,
   `list_files`, `list_by_tag`, `list_by_type`, `write_inbox` — see
   SCHEMA.md → MCP Server
+- **One Claude Code memory for all folders** (optional): Claude Code keeps a
+  separate auto-memory per start folder, so a fact saved in one project is missing
+  in the next. Add `"autoMemoryDirectory": "~/.claude/memory"` to
+  `~/.claude/settings.json` for one shared pool. Only the first 200 lines (25 KB) of
+  `MEMORY.md` load at startup: keep it short, tag lines by track, move standing
+  rules to `~/.claude/rules/`. The weekly review audits it.
 
 ## Merge Mode (re-running setup)
 
