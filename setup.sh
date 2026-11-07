@@ -4,7 +4,6 @@ set -euo pipefail
 # Second Brain Starter Kit — Setup Script
 # Phase 1: Create the workspace (knowledge base skeleton)
 # Phase 2: Install schema, skills, and agent discovery wiring
-# Phase 2b: MCP server registration (Claude Desktop + Claude Code)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DEFAULT_WORKSPACE="$HOME/prj/second-brain"
@@ -36,36 +35,6 @@ if command -v opencode >/dev/null 2>&1; then
     echo "  ok opencode"
 else
     echo "  - opencode not found (optional — install from https://opencode.ai)"
-fi
-
-# --- uv (Python package manager — required for the MCP server) ---
-# The MCP server is launched via: uv run --no-project --with "mcp>=1.2" python ...
-# which resolves the mcp package on demand, so no manual pip install is needed.
-UV_BIN=""
-if command -v uv >/dev/null 2>&1; then
-    UV_BIN="$(command -v uv)"
-    echo "  ok uv ($("$UV_BIN" --version | head -c 20))"
-else
-    echo "  - uv — not found (needed for the MCP server)"
-    if command -v curl >/dev/null 2>&1; then
-        echo "    Install with: curl -LsSf https://astral.sh/uv/install.sh | sh"
-        read -p "    Install uv now? [Y/n] " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-            if [[ -f "$HOME/.local/bin/uv" ]]; then
-                export PATH="$HOME/.local/bin:$PATH"
-                UV_BIN="$(command -v uv || echo "$HOME/.local/bin/uv")"
-                echo "  ok uv ($("$UV_BIN" --version | head -c 20))"
-            fi
-        fi
-    else
-        echo "    curl not found — install curl first, then: curl -LsSf https://astral.sh/uv/install.sh | sh"
-    fi
-fi
-if [[ -z "$UV_BIN" ]]; then
-    echo "  ! uv unavailable — the MCP server will NOT be installed or registered."
-    echo "    Everything else (skills, hooks, cron) works without it."
 fi
 
 if [[ $MISSING -eq 1 ]]; then
@@ -262,7 +231,7 @@ for skill_dir in "$SCRIPT_DIR"/skills/*/; do
     done
 done
 
-# --- Install utility scripts (MCP server, search, stats, media pipeline) ---
+# --- Install utility scripts (search, stats, media pipeline) ---
 # D1: these were previously never installed, yet SCHEMA.md refers to them.
 mkdir -p "$WORKSPACE_DIR/scripts"
 for script_file in "$SCRIPT_DIR"/scripts/*; do
@@ -270,7 +239,7 @@ for script_file in "$SCRIPT_DIR"/scripts/*; do
     install_kit_file "$script_file" "$WORKSPACE_DIR/scripts/$(basename "$script_file")"
 done
 find "$WORKSPACE_DIR/scripts" -maxdepth 1 -type f -exec chmod 0755 {} + 2>/dev/null || true
-echo "  Scripts installed: $(find "$WORKSPACE_DIR/scripts" -maxdepth 1 -type f | wc -l | tr -d ' ') (mcp_server.py, kb-search.py, ...)"
+echo "  Scripts installed: $(find "$WORKSPACE_DIR/scripts" -maxdepth 1 -type f | wc -l | tr -d ' ') (kb-search.py, kb-stats.py, ...)"
 
 # --- Install agent definitions (brain agents + general dev agents) ---
 mkdir -p "$WORKSPACE_DIR/agents"
@@ -451,148 +420,6 @@ print("  settings.json updated: security-guard + file-backup registered, deny li
 PYEOF
 echo "  Safety layer installed: security-guard.py (boundaries, secrets, push guard) + file-backup.py"
 
-# ===============================================
-# PHASE 2b: MCP server registration (needs uv)
-# ===============================================
-# The server is launched with uv, which resolves the mcp package on demand —
-# no manual pip install required (D2). Registration is skipped cleanly if uv
-# is unavailable (D5).
-
-MCP_LAUNCH_CMD="\"$UV_BIN\" run --no-project --with \"mcp>=1.2\" python \"$WORKSPACE_DIR/scripts/mcp_server.py\""
-MCP_SERVER_REGISTERED=0
-DESKTOP_CONFIG_FAILED=0
-
-if [[ -n "$UV_BIN" ]]; then
-    echo ""
-    echo "Phase 2b: MCP server registration (search + read + inbox capture) ..."
-
-    # 1) Claude Desktop
-    read -p "  Register the brain MCP server in Claude Desktop? [Y/n] " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-        if [[ "$(uname)" == "Darwin" ]]; then
-            DESKTOP_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
-        else
-            DESKTOP_CONFIG="$HOME/.config/Claude/claude_desktop_config.json"
-        fi
-        DESKTOP_PY_EXIT=0
-        if python3 - "$DESKTOP_CONFIG" "$UV_BIN" "$WORKSPACE_DIR" <<PYEOF
-import json, os, shutil, sys
-from datetime import datetime
-
-config_path, uv_bin, workspace = sys.argv[1], sys.argv[2], sys.argv[3]
-os.makedirs(os.path.dirname(config_path), exist_ok=True)
-
-# Exit codes: 0 = registered/updated, 3 = aborted without touching the file.
-def abort(msg):
-    print(f"  ! {msg}", file=sys.stderr)
-    sys.exit(3)
-
-cfg = {}
-existed = os.path.exists(config_path)
-if existed:
-    try:
-        with open(config_path) as f:
-            cfg = json.load(f)
-    except Exception as e:
-        abort(f"Could not parse existing config ({e}) — file left untouched")
-    if not isinstance(cfg, dict):
-        abort("Existing config is valid JSON but not an object — left untouched")
-
-mcp_servers = cfg.setdefault("mcpServers", {})
-if not isinstance(mcp_servers, dict):
-    abort("Existing config's 'mcpServers' is not an object — left untouched")
-
-already = "second-brain" in mcp_servers
-new_entry = {
-    "command": uv_bin,
-    "args": ["run", "--no-project", "--with", "mcp>=1.2",
-             "python", f"{workspace}/scripts/mcp_server.py"],
-    "env": {"SECOND_BRAIN_DIR": workspace},
-}
-if already and mcp_servers["second-brain"] == new_entry:
-    print("  Claude Desktop: 'second-brain' entry already up to date — no change")
-    sys.exit(0)
-
-# Back up the user's config only when the entry actually changes
-if existed:
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    backup = f"{config_path}.bak-{stamp}"
-    shutil.copy2(config_path, backup)
-    print(f"  Backed up existing config -> {os.path.basename(backup)}")
-
-mcp_servers["second-brain"] = new_entry
-# Preserve all other top-level keys in cfg (like userCustomSetting)
-
-# Atomic write: temp file in the same directory, then os.replace
-tmp_path = f"{config_path}.tmp-{os.getpid()}"
-with open(tmp_path, "w") as f:
-    json.dump(cfg, f, indent=2)
-os.replace(tmp_path, config_path)
-
-if already:
-    print("  Claude Desktop: replaced existing 'second-brain' MCP entry")
-else:
-    print("  Claude Desktop: registered 'second-brain' MCP server")
-print("  Restart Claude Desktop completely to load the server.")
-PYEOF
-        then
-            MCP_SERVER_REGISTERED=1
-        else
-            DESKTOP_PY_EXIT=$?
-            if [[ $DESKTOP_PY_EXIT -eq 3 ]]; then
-                echo "  Skipped Claude Desktop registration (config problem — file untouched)."
-                DESKTOP_CONFIG_FAILED=1
-            else
-                echo "  ! Claude Desktop registration failed unexpectedly."
-            fi
-            MCP_SERVER_REGISTERED=0
-        fi
-    else
-        echo "  Skipped Claude Desktop registration."
-    fi
-
-    # 2) Claude Code (optional, default no)
-    read -p "  Register it in Claude Code too? [y/N] " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        if command -v claude >/dev/null 2>&1; then
-            # Remove an existing entry first (idempotent), then add.
-            claude mcp remove --scope user second-brain >/dev/null 2>&1 || true
-            if claude mcp add --scope user second-brain \
-                -e "SECOND_BRAIN_DIR=$WORKSPACE_DIR" \
-                -- "$UV_BIN" run --no-project --with "mcp>=1.2" \
-                python "$WORKSPACE_DIR/scripts/mcp_server.py"; then
-                echo "  Claude Code: registered 'second-brain' MCP server (user scope)"
-                MCP_SERVER_REGISTERED=1
-            else
-                echo "  ! claude mcp add failed — add it manually:"
-                echo "    claude mcp add --scope user second-brain \\"
-                echo "      -e \"SECOND_BRAIN_DIR=$WORKSPACE_DIR\" -- \\"
-                echo "      $MCP_LAUNCH_CMD"
-            fi
-        else
-            echo "  ! claude CLI not found — add it manually:"
-            echo "    claude mcp add --scope user second-brain \\"
-            echo "      -e \"SECOND_BRAIN_DIR=$WORKSPACE_DIR\" -- \\"
-            echo "      $MCP_LAUNCH_CMD"
-        fi
-    else
-        echo "  Skipped Claude Code registration."
-    fi
-
-    if [[ $MCP_SERVER_REGISTERED -eq 1 ]]; then
-        echo "  MCP server ready. Tools: get_schema, get_index, search, read_file,"
-        echo "  list_files, list_by_tag, list_by_type, write_inbox (inbox-only write)."
-    fi
-else
-    echo ""
-    echo "Phase 2b: MCP server registration — SKIPPED (uv not available)."
-    echo "  The brain works fully without it (plain file reads). To add MCP later:"
-    echo "    1. Install uv:  curl -LsSf https://astral.sh/uv/install.sh | sh"
-    echo "    2. Re-run ./setup.sh and answer yes to registration."
-fi
-
 echo ""
 
 # ===============================================
@@ -705,22 +532,13 @@ echo ""
 echo "Workspace: $WORKSPACE_DIR"
 echo "  SCHEMA.md   — the operating manual every agent reads"
 echo "  skills/     — $(ls "$WORKSPACE_DIR/skills" | grep -v README | wc -l | tr -d ' ') shared skills (ingest, query, dream, onboard, ...)"
-echo "  scripts/    — mcp_server.py, kb-search.py, kb-stats.py, media-to-text.sh"
+echo "  scripts/    — kb-search.py, kb-stats.py, media-to-text.sh"
 echo "  inbox/      — drop stuff here, process weekly"
 echo "  knowledge/  — your profile, problems, goals (filled by /onboard)"
 echo ""
 echo "Agent wiring:"
 echo "  Claude Code: shim + rules + one skills symlink per skill"
 echo "  OpenCode:    shim + skills config entry"
-if [[ $MCP_SERVER_REGISTERED -eq 1 ]]; then
-    echo "  MCP server:  registered (Claude Desktop and/or Claude Code)"
-elif [[ -z "$UV_BIN" ]]; then
-    echo "  MCP server:  NOT registered (uv unavailable — install uv and re-run setup)"
-elif [[ $DESKTOP_CONFIG_FAILED -eq 1 ]]; then
-    echo "  MCP server:  NOT registered (Claude Desktop config could not be used - see message above)"
-else
-    echo "  MCP server:  NOT registered (declined — re-run setup to register)"
-fi
 echo ""
 echo "Documentation:"
 echo "  MANUAL.md        — complete command reference (read this first)"

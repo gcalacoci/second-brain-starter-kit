@@ -27,7 +27,7 @@ answer filed back.
 ├── SCHEMA.md                  ← this file (the schema)
 ├── inbox/                     ← quick capture; processed by dream sequence / weekly review
 ├── skills/                    ← shared skill library (see Skills section)
-├── scripts/                   ← utility scripts (MCP server, search, stats, media)
+├── scripts/                   ← utility scripts (search, stats, media)
 │
 ├── .overmind/
 │   └── config.yaml
@@ -335,52 +335,3 @@ When running unattended, the agent must still follow this schema, load the
 `dream.last-run` in config.yaml is updated. Test the wiring anytime with
 `.overmind/dream-cron.sh --dry-run`. If the schedule misses (machine off), trigger
 manually with "dream sequence" — same flow.
-
-## MCP Server
-
-An optional MCP server (`scripts/mcp_server.py`) lets MCP-capable clients
-(e.g. Claude Desktop, Claude Code) search and read the brain autonomously,
-and capture new material into `inbox/` — without touching the filesystem
-directly. It is launched via uv, which resolves the `mcp` package on demand:
-
-```
-uv run --no-project --with "mcp>=1.2" python {{WORKSPACE_DIR}}/scripts/mcp_server.py
-```
-
-The workspace root comes from the `SECOND_BRAIN_DIR` env var (falls back to
-`~/prj/second-brain`). Registration (done by `setup.sh` Phase 2b) writes the
-launch command into Claude Desktop's `claude_desktop_config.json` and, if
-requested, into Claude Code via `claude mcp add`.
-
-### Tools
-
-| Tool | Args | Returns |
-|---|---|---|
-| `get_schema` | — | `SCHEMA.md` content |
-| `get_index` | — | `wiki/index.md` content |
-| `search` | `query: str`, `limit: int = 15` | ranked results (via `scripts/kb-search.py`) |
-| `read_file` | `path: str` (relative to KB root) | file content |
-| `list_files` | `dir: str = ""` | `.md` files under it, relative paths |
-| `list_by_tag` | `tag: str` | pages whose frontmatter tags include it |
-| `list_by_type` | `type: str` | pages of a type (topic / entity / source-summary) |
-| `write_inbox` | `filename: str`, `content: str` | path written, or an error |
-
-### Read / write rules
-
-- **Reads**: paths must resolve inside the workspace root (`..`, absolute
-  paths and symlink escapes are refused). Protected locations are never
-  readable: `.git/`, `.overmind/logs/`, and files matching `.env*`, `*.secret`,
-  `*.key`, `*.pem`. Reads are capped at 1 MB per file.
-- **Writes**: `write_inbox` is the only write in the entire server. Filenames
-  must match `^[a-z0-9][a-z0-9-]{0,80}\.md$`; the note lands in
-  `inbox/<YYYY-MM-DD>-<filename>` (local time) with a `<!-- captured: ..., via:
-  second-brain-mcp -->` header; existing files are never overwritten; content
-  is capped at 200 KB. No git operations.
-- **Inbox items are raw captures**: they are processed into `raw/sources/` +
-  pages by the normal ingest protocol (see The 5 Operations).
-
-### Legacy resources
-
-The server also exposes a few static resources (`second-brain://schema`,
-`second-brain://wiki/index`, `second-brain://page/{path}`, …) for clients that
-prefer attaching resources manually. The tools are the primary interface.

@@ -390,58 +390,12 @@ The same brain is operated by any agent:
 | Agent | How it finds the brain | How it finds skills |
 |---|---|---|
 | **Claude Code** | `~/prj/CLAUDE.md` shim → `SCHEMA.md` | one `~/.claude/skills/<skill-id>` symlink per skill |
-| **Claude Desktop** | MCP server entry in its config (Phase 2b) | via the MCP `list_files` / `read_file` tools |
 | **OpenCode** | `~/.opencode/instructions.md` shim | `skills` entry in `~/.config/opencode/opencode.json` |
 | **Any other** | "Read `~/prj/second-brain/SCHEMA.md` and follow it" — or paste `AGENT-PROMPT.md` | Read `SKILL.md` files directly |
 
 `AGENT-PROMPT.md` is a paste-at-session-start bootstrap for agents without
 automatic discovery (fresh chats, web UIs, new tools). It contains the session
 checklist, the command→skill map, and the hard rules.
-
-### Programmatic access (MCP, optional)
-
-A Python MCP server (`~/prj/second-brain/scripts/mcp_server.py`) lets MCP-capable
-clients (Claude Desktop, Claude Code) search and read the brain autonomously and
-capture notes into `inbox/`. It is launched via uv, which resolves the `mcp`
-package on demand — no manual pip install:
-
-```
-uv run --no-project --with "mcp>=1.2" python ~/prj/second-brain/scripts/mcp_server.py
-```
-
-The workspace root comes from the `SECOND_BRAIN_DIR` env var (falls back to
-`~/prj/second-brain`). Setup Phase 2b registers the server for you:
-
-- **Claude Desktop**: merges `mcpServers.second-brain` into
-  `~/.config/Claude/claude_desktop_config.json` (Linux) or
-  `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS),
-  backing up your existing config first. Restart Claude Desktop completely
-  after registration.
-- **Claude Code**: `claude mcp add --scope user second-brain ...`
-
-**Tools exposed:**
-
-| Tool | What it does |
-|---|---|
-| `get_schema` | Return SCHEMA.md (the operating manual) |
-| `get_index` | Return wiki/index.md (table of contents) |
-| `search` | Ranked search over pages, knowledge, session notes and outputs |
-| `read_file` | Read one file inside the workspace (1 MB cap) |
-| `list_files` | List .md files under a workspace directory |
-| `list_by_tag` | Pages whose frontmatter tags include a tag |
-| `list_by_type` | Pages of a type (topic / entity / source-summary). Argument: `type` |
-| `write_inbox` | Capture a note into inbox/ (the only write) |
-
-**Safety:** reads are jailed to the workspace (path escapes, `.git/`, logs and
-secret patterns are refused; 1 MB cap). `write_inbox` accepts only kebab-case
-`.md` filenames (argument: `filename`), date-prefixes them into `inbox/` using
-local time, never overwrites, and caps content at 200 KB.
-
-**To verify the server:** restart Claude Desktop, open a conversation, and ask
-"search my brain for X" — the model should call `search` on its own. Or check
-`claude mcp list` for Claude Code.
-
-This is an acceleration, not a requirement — plain file reads always work.
 
 ---
 

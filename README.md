@@ -44,8 +44,7 @@ The script asks for your name and where to put the workspace
 1. Creates the workspace: `raw/`, `wiki/`, `skills/`, `inbox/`, `outputs/`, `knowledge/`, `scripts/`
 2. Installs the shared schema (`SCHEMA.md`), the skill library, and the utility scripts
 3. Wires agent discovery: OpenCode `skills` config entry + one Claude Code symlink per skill
-4. Optionally registers the MCP server in Claude Desktop and/or Claude Code (needs uv)
-5. Initializes a **local-only** git repo (your knowledge never leaves the machine
+4. Initializes a **local-only** git repo (your knowledge never leaves the machine
    unless you explicitly add a private remote)
 
 Then start your first session:
@@ -96,7 +95,7 @@ it exists. See `MANUAL.md` → Automation.
 ├── outputs/             ← finished briefings, reports, summaries
 ├── knowledge/           ← meta-knowledge: profile, problems, goals (from /onboard)
 ├── skills/              ← shared skill library (ingest, query, dream, onboard, ...)
-└── .overmind/           ← config + MCP resource map
+└── .overmind/           ← config
 ```
 
 Three layers: **raw sources** (immutable truth) → **wiki pages** (LLM-maintained
@@ -170,10 +169,6 @@ repo and add it deliberately — never a public one.
 
 - Git
 - Python 3.10+ (for hooks and scripts)
-- **uv** (recommended — `curl -LsSf https://astral.sh/uv/install.sh | sh`).
-  Required for the MCP server, which is launched via
-  `uv run --no-project --with "mcp>=1.2"` — uv resolves the `mcp` package on
-  demand, no manual pip install needed.
 - One or more agents: [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
   and/or [OpenCode](https://opencode.ai)
 - Optional: [Obsidian](https://obsidian.md) for browsing the wiki (graph view is
@@ -185,10 +180,6 @@ repo and add it deliberately — never a public one.
 - **Focus/scope**: re-run `/onboard` anytime to redefine what the brain is for
 - **New skills**: say `add a skill` — the `kb-skill-add` skill walks the agent
   through creating it, registering it in `SCHEMA.md`, and wiring discovery
-- **MCP access**: the Python MCP server (`scripts/mcp_server.py`, launched via
-  uv) exposes 8 tools — `get_schema`, `get_index`, `search`, `read_file`,
-  `list_files`, `list_by_tag`, `list_by_type`, `write_inbox` — see
-  SCHEMA.md → MCP Server
 - **One Claude Code memory for all folders** (optional): Claude Code keeps a
   separate auto-memory per start folder, so a fact saved in one project is missing
   in the next. Add `"autoMemoryDirectory": "~/.claude/memory"` to
@@ -221,7 +212,6 @@ Setup never stages or commits anything on your behalf — review with
 | ✅ | Export / publish | kb-stats.py, kb-query briefings, outputs/ |
 | ✅ | Telemetry | kb-stats.py dashboard (volume, hubs, problems, commits) |
 | ✅ | Conventional Commits | Policy in SCHEMA, history rewritten, skills emit feat:/docs:/chore: |
-| 🟡 | MCP server (Python, uv-launched) | `scripts/mcp_server.py` — register via setup Phase 2b |
 | 🟡 | qmd / Meilisearch integration | Optional upgrade when search needs scale |
 | 🟢 | Proactive profile refresh | Agent suggests /onboard refresh after 90 days |
 | 🟢 | Rich media in Obsidian | raw/assets/ attachment folder + image download |
