@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Pre-commit leak guard for this repo, two gitleaks passes on the staged diff:
+#   1. secrets: .gitleaks.toml in the repo (gitleaks default rules)
+#   2. personal strings: a private deny-list kept OUTSIDE the repo,
+#      $BRAIN_GUARD_PERSONAL or ~/.config/brain-guard/personal.toml
+# Enable once per clone:  git config core.hooksPath .githooks
+# Install gitleaks:       https://github.com/gitleaks/gitleaks/releases
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+personal="${BRAIN_GUARD_PERSONAL:-$HOME/.config/brain-guard/personal.toml}"
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+    if [[ -f "$personal" ]]; then
+        echo "pre-commit: gitleaks not found but a personal deny-list exists; refusing to commit." >&2
+        exit 1
+    fi
+    echo "pre-commit: gitleaks not installed, leak scan skipped." >&2
+    exit 0
+fi
+
+status=0
+gitleaks git "$root" --pre-commit --staged --redact --no-banner \
+    -c "$root/.gitleaks.toml" || status=1
+
+if [[ -f "$personal" ]]; then
+    gitleaks git "$root" --pre-commit --staged --no-banner \
+        -c "$personal" || status=1
+fi
+
+if [[ $status -ne 0 ]]; then
+    echo "pre-commit: leak scan found something; commit refused. Fix the staged files." >&2
+fi
+exit $status

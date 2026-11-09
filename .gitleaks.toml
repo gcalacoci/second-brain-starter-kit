@@ -1,0 +1,6 @@
+# gitleaks config for this repo (pass 1 of .githooks/pre-commit).
+# Default secret rules; add repo-specific rules or allowlists below.
+title = "second-brain-starter-kit"
+
+[extend]
+useDefault = true

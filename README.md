@@ -196,6 +196,20 @@ overwrite one you've edited, the new version is written next to yours as
 Setup never stages or commits anything on your behalf — review with
 `git -C <workspace> status` and commit what you want to keep.
 
+## Contributing: leak guard
+
+This repo is public. Before your first commit, enable the pre-commit leak guard:
+
+```
+git config core.hooksPath .githooks
+```
+
+It runs [gitleaks](https://github.com/gitleaks/gitleaks) on the staged diff twice:
+secrets (`.gitleaks.toml`), then an optional private deny-list of your own personal
+strings (name, home path, hostnames) kept outside the repo at
+`~/.config/brain-guard/personal.toml` (or `$BRAIN_GUARD_PERSONAL`). Without gitleaks the
+scan is skipped with a warning.
+
 ## Roadmap
 
 | Status | Item | Notes |
