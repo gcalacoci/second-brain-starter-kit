@@ -15,9 +15,9 @@ Lint and health-check the Second Brain knowledge base at `~/prj/second-brain/`.
 4. **Detect stale content**: claims superseded by newer sources. Update the page and note the change in its body.
 5. **Find orphans**: pages in `raw/pages/` with no inbound `[[wikilink]]` or index entry. Link them from related pages or flag them.
 6. **Find missing pages**: concepts or entities mentioned repeatedly but without their own page. Create them or flag them as gaps.
-7. **Verify index.md matches reality**: every page in `raw/pages/` is listed, no dead entries remain.
-8. **Check frontmatter integrity**: every page has required fields (`type`, `title`, `tags`, `created`, `updated`, `agent`).
-9. Append to `wiki/log.md`: `## [YYYY-MM-DD] dream - <summary of findings and fixes>`
+7. **Regenerate the index**: `python3 -I .overmind/indexgen.py`.
+8. **Run the linter**: `python3 -I .overmind/brain_lint.py` (frontmatter, duplicate ids, dangling links, index, log); fix the errors, judge the warnings.
+9. Put the summary of findings and fixes in the commit message body: it becomes the log entry.
 10. Update `last-run` in `.overmind/config.yaml` (dream section) to today.
 11. Commit: `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "chore: dream health check <YYYY-MM-DD>"` — **local-only repo, never push.**
 

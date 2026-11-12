@@ -59,7 +59,7 @@ Load the matching skill **before** acting. Skills live in `~/prj/second-brain/sk
 
 Every ingest and every valuable query **must**:
 1. Touch a content page in `raw/pages/`
-2. Append to `wiki/log.md`
+2. End with a commit: the commit message is the log line (`wiki/log.md` is generated)
 
 This write-back is what makes the brain compound. Don't skip it.
 

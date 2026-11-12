@@ -165,6 +165,17 @@ The knowledge base git repo is **local-only by default**. A safety hook blocks
 `git push` for the brain. If you want an off-machine backup, create a **private**
 repo and add it deliberately — never a public one.
 
+Brain git hooks are on after setup (`core.hooksPath = .overmind/git-hooks`):
+
+| Hook | What it does |
+|---|---|
+| pre-commit | `githook.py`: refuses staged `private/` paths, secret file names and content, edits to `raw/sources/`; runs `brain_lint.py --staged`; then gitleaks on the staged diff if installed |
+| commit-msg | Refuses AI-assistant trailers, opt-in: `git config brain.blockAiTrailers true` |
+| post-commit | `loggen.py` rebuilds `wiki/log.md` from git log: the commit message is the log line |
+
+`wiki/index.md` is generated too: `python3 -I .overmind/indexgen.py` (one line per page,
+from its `summary:` field). Full lint any time: `python3 -I .overmind/brain_lint.py`.
+
 ## Requirements
 
 - Git
@@ -226,6 +237,7 @@ scan is skipped with a warning.
 | ✅ | Export / publish | kb-stats.py, kb-query briefings, outputs/ |
 | ✅ | Telemetry | kb-stats.py dashboard (volume, hubs, problems, commits) |
 | ✅ | Conventional Commits | Policy in SCHEMA, history rewritten, skills emit feat:/docs:/chore: |
+| ✅ | Brain lint + git hooks | brain_lint.py, generated index and log (indexgen.py, loggen.py), pre-commit gate |
 | 🟡 | qmd / Meilisearch integration | Optional upgrade when search needs scale |
 | 🟢 | Proactive profile refresh | Agent suggests /onboard refresh after 90 days |
 | 🟢 | Rich media in Obsidian | raw/assets/ attachment folder + image download |

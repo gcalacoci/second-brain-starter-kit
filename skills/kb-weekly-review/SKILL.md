@@ -39,5 +39,5 @@ Weekly maintenance and improvement of the Second Brain at `~/prj/second-brain/`.
    - Stale pages
    - Inbox backlog
    - Memory audit
-7. Append to `wiki/log.md`: `## [YYYY-MM-DD] session - weekly review`
+7. (Log: the commit message is the log line (wiki/log.md is generated from git log after each commit; never edit it).)
 8. Commit: `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "docs: weekly review <date>"` — local-only, never push.

@@ -149,25 +149,20 @@ install_kit_file "$SCRIPT_DIR/templates/outputs-README.md" "$WORKSPACE_DIR/outpu
 install_kit_file "$SCRIPT_DIR/templates/skills-README.md" "$WORKSPACE_DIR/skills/README.md"
 
 # --- Wiki seed files ---
+# --- Brain tools: lint, generated index and log, git hooks ---
+# wiki/index.md is built from page frontmatter (indexgen.py); wiki/log.md from git log
+# (loggen.py, run by the post-commit hook). Neither is edited by hand.
+mkdir -p "$WORKSPACE_DIR/.overmind/git-hooks"
+for tool in brain_lint.py githook.py indexgen.py loggen.py; do
+    install_kit_file "$SCRIPT_DIR/overmind/$tool" "$WORKSPACE_DIR/.overmind/$tool"
+    chmod 0755 "$WORKSPACE_DIR/.overmind/$tool"
+done
+for hook in pre-commit commit-msg post-commit; do
+    install_kit_file "$SCRIPT_DIR/overmind/git-hooks/$hook" "$WORKSPACE_DIR/.overmind/git-hooks/$hook"
+    chmod 0755 "$WORKSPACE_DIR/.overmind/git-hooks/$hook"
+done
 if [[ ! -f "$WORKSPACE_DIR/wiki/index.md" ]]; then
-    cat > "$WORKSPACE_DIR/wiki/index.md" <<'EOF'
-# Second Brain Wiki Index
-
-## Topics
-*No topic pages yet.*
-
-## Entities
-*No entity pages yet.*
-
-## Source Summaries
-*No source summaries yet.*
-EOF
-fi
-
-if [[ ! -f "$WORKSPACE_DIR/wiki/log.md" ]]; then
-    echo "# Knowledge Base Log" > "$WORKSPACE_DIR/wiki/log.md"
-    echo "" >> "$WORKSPACE_DIR/wiki/log.md"
-    echo "---" >> "$WORKSPACE_DIR/wiki/log.md"
+    python3 -I "$WORKSPACE_DIR/.overmind/indexgen.py" --root "$WORKSPACE_DIR" >/dev/null
 fi
 
 if [[ ! -f "$WORKSPACE_DIR/wiki/processed.md" ]]; then
@@ -442,14 +437,24 @@ if [[ ! -d .git ]]; then
 *.key
 *.pem
 .env*
+# generated from git log by .overmind/loggen.py
+wiki/log.md
 EOF
     git add -A
     git commit -q -m "chore: init second brain knowledge base (local-only git)"
+    # Hooks on after the first commit: pre-commit gate + lint, commit-msg, log rebuild.
+    git config core.hooksPath .overmind/git-hooks
+    python3 -I .overmind/loggen.py >/dev/null
     echo "  Git repo initialized (no remote — your knowledge stays on this machine)."
+    echo "  Git hooks on: .overmind/git-hooks (lint + secret gate before each commit, log after)."
 else
     # Merge mode: the user's repo is theirs. Setup never stages or commits on
     # its behalf (D6) — the end-of-run summary tells them what to review.
     echo "  Existing repo detected — no commits made by setup (review with 'git status')."
+    if [[ -z "$(git config core.hooksPath || true)" ]]; then
+        echo "  To turn on the brain's git hooks: git -C $WORKSPACE_DIR config core.hooksPath .overmind/git-hooks"
+        echo "  wiki/log.md becomes generated: add it to .gitignore and run 'git rm --cached wiki/log.md'."
+    fi
 fi
 
 # ===============================================

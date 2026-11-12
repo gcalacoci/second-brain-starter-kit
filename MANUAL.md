@@ -46,7 +46,7 @@ add this:
 - Raw source saved to `raw/sources/` (immutable, never edited)
 - A source summary page created in `raw/pages/sources/`
 - Relevant topic/entity pages created or updated in `raw/pages/`
-- `wiki/index.md`, `wiki/log.md`, `wiki/processed.md` all updated
+- `wiki/index.md` regenerated, `wiki/processed.md` updated; the commit becomes the `wiki/log.md` entry
 - Git commit: `ingest: <title>`
 
 **Pro tip:** Use the inbox for quick capture. Drop files into `inbox/` and run `dream sequence` weekly to process them in batch.
@@ -84,7 +84,7 @@ save this session
 **What happens:**
 - Key takeaways summarized into `raw/session-notes/<date>-<slug>.md`
 - Any content pages the session touched are updated
-- `wiki/log.md` appended
+- The commit becomes the `wiki/log.md` entry
 - Git commit: `session: <title>`
 
 **Pro tip:** Session notes are ephemeral capture — the durable knowledge lives in the content pages they link to (`pages-updated` in frontmatter).
@@ -106,7 +106,7 @@ dream sequence
 - Detects stale/outdated claims
 - Identifies orphan pages (no inbound links)
 - Flags missing pages (concepts mentioned but without their own page)
-- Fixes what it can, flags the rest in `wiki/log.md`
+- Fixes what it can, flags the rest in the commit message (it becomes the log entry)
 - Git commit: `dream: <date>`
 
 **Pro tip:** Schedule this for Friday afternoon. Wake up Monday to a cleaner brain.

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Runs detached so commits don't wait; never fails the commit (it is already made).
+# 1. wiki/log.md is generated from git log: the commit message is the log line.
+# 2. if qmd is installed, keep its search index current.
+ROOT=$(git rev-parse --show-toplevel)
+( python3 -I "$ROOT/.overmind/loggen.py" >/dev/null 2>&1 & )
+command -v qmd >/dev/null 2>&1 || exit 0
+( qmd update >/dev/null 2>&1 & )

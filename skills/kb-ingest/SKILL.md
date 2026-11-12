@@ -18,8 +18,8 @@ Ingest a new source into the Second Brain knowledge base at `~/prj/second-brain/
 2. Read the source. Extract key points, entities, topics, and claims.
 3. Create a **source summary** at `~/prj/second-brain/raw/pages/sources/<slug>.md` with frontmatter: `type: source-summary`, `title`, `raw-file`, `tags`, `topics`, `entities`, `ingested`, `agent: <your agent name>`.
 4. **Create or update** topic pages in `raw/pages/topics/` and entity pages in `raw/pages/entities/` as needed. Update the `updated` date on every page you touch.
-5. Update `wiki/index.md` — add new pages under the right category with a one-line summary.
-6. Append to `wiki/log.md`: `## [YYYY-MM-DD] ingest - <short title>`
+5. Give each new page a one-line `summary:` in its frontmatter, then run `python3 -I .overmind/indexgen.py` (wiki/index.md is generated; each line is the page's `summary:` field).
+6. (Log: the commit message is the log line (wiki/log.md is generated from git log after each commit; never edit it).)
 7. Add a row to `wiki/processed.md`.
 8. Commit: `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "feat: ingest <short title>"` — the repo is **local-only, no remote. Never push.**
 

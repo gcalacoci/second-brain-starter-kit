@@ -1,0 +1,12 @@
+#!/bin/sh
+# Brain gate: logic in .overmind/githook.py. Then, if gitleaks is installed, a secret scan
+# of the staged diff, plus your private deny-list when it exists
+# ($BRAIN_GUARD_PERSONAL or ~/.config/brain-guard/personal.toml, kept outside the brain).
+here=$(dirname "$0")
+python3 -I "$here/../githook.py" pre-commit "$@" || exit 1
+command -v gitleaks >/dev/null 2>&1 || exit 0
+root=$(git rev-parse --show-toplevel)
+gitleaks git "$root" --pre-commit --staged --redact --no-banner --log-level warn || exit 1
+personal="${BRAIN_GUARD_PERSONAL:-$HOME/.config/brain-guard/personal.toml}"
+[ -f "$personal" ] || exit 0
+exec gitleaks git "$root" --pre-commit --staged --no-banner --log-level warn -c "$personal"

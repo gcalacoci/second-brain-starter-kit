@@ -1,0 +1,3 @@
+#!/bin/sh
+# Brain gate: logic in .overmind/githook.py
+exec python3 -I "$(dirname "$0")/../githook.py" commit-msg "$@"

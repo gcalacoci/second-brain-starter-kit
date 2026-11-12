@@ -125,8 +125,7 @@ Wait for explicit confirmation. Adjust if they correct you.
 
 ### Step 6: Log and commit
 
-1. Append to `wiki/log.md`:
-   `## [YYYY-MM-DD] update - <short description of the change>`
+1. Log: the commit message is the log line (wiki/log.md is generated from git log after each commit; never edit it).
 2. Commit:
    `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "docs: update <short description>"`
    (local-only repo, never push)
