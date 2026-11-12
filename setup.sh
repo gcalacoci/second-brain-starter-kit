@@ -155,7 +155,7 @@ install_kit_file "$SCRIPT_DIR/templates/skills-README.md" "$WORKSPACE_DIR/skills
 mkdir -p "$WORKSPACE_DIR/.overmind/git-hooks"
 mkdir -p "$WORKSPACE_DIR/.overmind/lib"
 install_kit_file "$SCRIPT_DIR/overmind/lib/cron.sh" "$WORKSPACE_DIR/.overmind/lib/cron.sh"
-for tool in brain_lint.py githook.py indexgen.py loggen.py doctor.py brain-maint.sh; do
+for tool in brain_lint.py githook.py indexgen.py loggen.py doctor.py brain-maint.sh learned.py; do
     install_kit_file "$SCRIPT_DIR/overmind/$tool" "$WORKSPACE_DIR/.overmind/$tool"
     chmod 0755 "$WORKSPACE_DIR/.overmind/$tool"
 done
@@ -365,17 +365,22 @@ else
     echo "  ! python3 not found — add \"$WORKSPACE_DIR/skills\" to the 'skills' array in $OPENCODE_CONFIG manually"
 fi
 
-# Safety hooks: security guard + pre-edit backup (registered in settings.json)
+# Hooks (registered in settings.json): security guard, pre-edit backup, token guard
+# (an unchanged image is read once), context warnings + the save point's "Learned" step
 # Merge-aware: rendered into temp files first, then install_kit_file decides
 # (fresh = overwrite; merge = .kit-new on conflict).
 mkdir -p "$HOME/.claude/hooks" "$HOME/.claude/state"
-for hook in security-guard.py file-backup.py; do
+for hook in security-guard.py file-backup.py token-guard.py context-warn.py; do
     HOOK_TMP="$(mktemp)"
     sed -e "s|{{KB_DIR}}|$WORKSPACE_DIR|g" "$SCRIPT_DIR/hooks/$hook" > "$HOOK_TMP"
     install_kit_file "$HOOK_TMP" "$HOME/.claude/hooks/$hook"
     rm -f "$HOOK_TMP"
 done
-chmod 0755 "$HOME/.claude/hooks/security-guard.py" "$HOME/.claude/hooks/file-backup.py"
+for hook in security-guard.py file-backup.py token-guard.py context-warn.py; do
+    chmod 0755 "$HOME/.claude/hooks/$hook"
+done
+# Status line (context, plan usage, failed crons): ~/.claude/statusline.py
+install_kit_file "$SCRIPT_DIR/hooks/statusline.py" "$HOME/.claude/statusline.py"
 # Superseded script from older installs
 rm -f "$HOME/.claude/hooks/bash-safety.sh"
 
@@ -406,13 +411,17 @@ pre = hooks.setdefault("PreToolUse", [])
 def has(hook_list, needle):
     return any(needle in json.dumps(h) for h in hook_list)
 
-if not has(pre, "security-guard.py"):
+GUARD_MATCHER = "Read|Write|Edit|Bash|Grep|Glob|NotebookEdit|Agent|Task|mcp__claude_ai_Google_Calendar__.*"
+guard = next((h for h in pre if "security-guard.py" in json.dumps(h)), None)
+if guard is None:
     pre.append({
-        "matcher": "Read|Write|Edit|Bash|Grep|Glob|NotebookEdit",
+        "matcher": GUARD_MATCHER,
         "hooks": [{"type": "command",
                    "command": "python3 $HOME/.claude/hooks/security-guard.py",
                    "timeout": 5}],
     })
+elif guard.get("matcher") == "Read|Write|Edit|Bash|Grep|Glob|NotebookEdit":
+    guard["matcher"] = GUARD_MATCHER  # older installs: add subagents and calendar
 if not has(pre, "file-backup.py"):
     pre.append({
         "matcher": "Edit|Write",
@@ -420,13 +429,35 @@ if not has(pre, "file-backup.py"):
                    "command": "python3 $HOME/.claude/hooks/file-backup.py",
                    "timeout": 5}],
     })
+if not has(pre, "token-guard.py"):
+    pre.append({
+        "matcher": "Read",
+        "hooks": [{"type": "command",
+                   "command": "python3 $HOME/.claude/hooks/token-guard.py",
+                   "timeout": 5}],
+    })
+prompt = hooks.setdefault("UserPromptSubmit", [])
+if not has(prompt, "context-warn.py"):
+    prompt.append({
+        "hooks": [{"type": "command",
+                   "command": "python3 $HOME/.claude/hooks/context-warn.py",
+                   "timeout": 10}],
+    })
+# Never replace a status line the user already has.
+status_note = "kept yours"
+if not cfg.get("statusLine"):
+    cfg["statusLine"] = {"type": "command", "command": "python3 $HOME/.claude/statusline.py"}
+    status_note = "set"
 
 with open(settings_path, "w") as f:
     json.dump(cfg, f, indent=2)
 
-print("  settings.json updated: security-guard + file-backup registered, deny list merged")
+print("  settings.json updated: security-guard, file-backup, token-guard, context-warn "
+      "registered, deny list merged, status line " + status_note)
 PYEOF
 echo "  Safety layer installed: security-guard.py (boundaries, secrets, push guard) + file-backup.py"
+echo "  Token layer installed: token-guard.py, context-warn.py (warns at 100k/140k/170k; for a 1M"
+echo "  window set \"env\": {\"CONTEXT_WARN_TIERS\": \"200,250,400\"} in ~/.claude/settings.json)"
 
 echo ""
 

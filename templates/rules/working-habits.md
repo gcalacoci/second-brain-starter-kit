@@ -22,7 +22,8 @@ set or change a habit, so later sessions know how current it is.
   learned beyond its decisions (tool quirks, working endpoints, sources that mislabel, user
   corrections), each with a reason and a destination page; no page fits → create one,
   link it, index it; write them all; end with "nothing else learned". Disk is cheap: never
-  skip a write to save tokens.
+  skip a write to save tokens. On "save session/everything/point" the hook
+  `context-warn.py` adds candidates from the transcript (`.overmind/learned.py`).
 
 ## How to work
 - **Two tracks:** finish the task, then propose in one line at most one change that makes

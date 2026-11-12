@@ -33,6 +33,7 @@ answer filed back.
 ├── .overmind/
 │   ├── config.yaml
 │   ├── brain_lint.py, indexgen.py, loggen.py, githook.py, doctor.py
+│   ├── learned.py               ← save-point candidates (run by the context-warn hook)
 │   ├── brain-maint.sh, lib/cron.sh  ← scheduled maintenance
 │   └── git-hooks/             ← pre-commit, commit-msg, post-commit
 │

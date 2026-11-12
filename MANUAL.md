@@ -310,12 +310,20 @@ git push -u origin master
 
 ### Safety hooks
 
-Registered for Claude Code by `setup.sh` (in `~/.claude/settings.json` → `hooks.PreToolUse`):
+Registered for Claude Code by `setup.sh` (in `~/.claude/settings.json` → `hooks`):
 
 | Hook | Fires before | What it does |
 |---|---|---|
-| `security-guard.py` | Read, Write, Edit, Bash, Grep, Glob | The main defense layer (below) |
+| `security-guard.py` | Read, Write, Edit, Bash, Grep, Glob, subagents, calendar | The main defense layer (below) |
 | `file-backup.py` | Edit, Write | Copies any brain file to `~/.claude/backups/second-brain/<name>-<timestamp>.bak` before it's modified (keeps last 10 per file) |
+| `token-guard.py` | Read | Denies a second Read of an unchanged image (each view stays in the context and is re-read with every message) |
+| `context-warn.py` | each prompt you send | Warns you and the agent as the context grows (100k notice, 140k warning, 170k every prompt); on "save session", "save everything" or "save point" it adds the **Learned** step with candidates from the transcript (`.overmind/learned.py`: URLs that answered, error→fix pairs, your own words) |
+
+The status line (`~/.claude/statusline.py`, set only when you have none) shows model, folder
+and branch, context used (yellow, then red `⚠ compact` at the same tiers), transcript age
+and size, plan usage or cost, and `cron ✗ <job>` when a scheduled job's last run failed.
+**1M context window?** Raise the tiers for both: add
+`"env": {"CONTEXT_WARN_TIERS": "200,250,400"}` to `~/.claude/settings.json`.
 
 **What the guard blocks** (agent sees the reason; every block is logged to `~/.claude/state/guard-log.jsonl`):
 
@@ -326,6 +334,11 @@ Registered for Claude Code by `setup.sh` (in `~/.claude/settings.json` → `hook
 | Secrets | Reading or writing `.env`, `.key`, `.pem`, `*.secret` — via tools or shell commands (`cat`, `grep`, redirects, `tee`) |
 | Staging secrets | `git add` of secret files |
 | Force-push | `git push --force` anywhere |
+| History and gates | `git commit --amend`, `--no-verify` / `commit -n` (the brain's pre-commit gate stays on) |
+| Claude's login | `~/.claude/.credentials.json` named in any tool or command |
+| Unattended config edits | `claude -p` runs (the scheduled Dream Sequence) changing `~/.claude/hooks`, `rules`, `settings*.json` or the status line |
+| Calendar invitations | Google Calendar events with attendees (create it without them, invite by hand) |
+| Subagent model (opt-in) | With `GUARD_CHEAP_SUBAGENTS=1` in the settings `env`: subagents without `model: sonnet` or `haiku` (an unset model runs on the parent's, often Opus) |
 | Destructive ops | `rm`, `mv`, `chmod`… targeting paths outside allowed roots |
 
 Plus a `permissions.deny` list in settings.json (26 rules): `rm -rf`, `sudo`, `mkfs`, `dd`, `curl | bash`, and reads of `~/.ssh`, `~/.aws`, `~/.kube`, `~/.gnupg`, browser/gh credentials.

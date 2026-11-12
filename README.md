@@ -244,7 +244,8 @@ scan is skipped with a warning.
 | ✅ | Core KB + 9 skills | Ingest, query, dream (incl. weekly review), session, update, plan, skill-add, auto-session, onboard |
 | ✅ | 6 subagents (2 brain + 4 dev) | kb-digest, kb-linter, researcher, code-reviewer, bug-fixer, implementer |
 | ✅ | Multi-agent wiring | OpenCode + Claude Code + generic AGENT-PROMPT |
-| ✅ | Safety hooks | JSON guard, path boundaries, secrets, push block, audit log, pre-edit backup |
+| ✅ | Safety hooks | JSON guard, path boundaries, secrets, push block, no amend or hook skips, audit log, pre-edit backup |
+| ✅ | Token hooks | context warnings, save-point "Learned" step (learned.py), image re-read guard, status line |
 | ✅ | Automation | brain-maint.sh: scripted checks + agent dream, lock, log rotation, status files, doctor.py |
 | ✅ | Auto-save session | Stop hook → pending markers → kb-auto-session |
 | ✅ | Search (built-in) | kb-search.py — BM25 + recency, zero deps |
