@@ -70,8 +70,7 @@ These are in `MANUAL.md` with full details. Quick version:
 | `save that` | The current answer becomes a new topic page — the brain compounds |
 | `dream sequence` | Scheduled or on-demand lint: ingests new inbox files, finds contradictions, orphans, stale claims |
 
-Plus: `save this session` (capture chat takeaways), `weekly review`
-(freeform health check), `update my profile` (context changed), `/onboard`
+Plus: `save this session` (capture chat takeaways), `update my profile` (context changed), `/onboard`
 (redo guided setup).
 
 **Hands-off mode:** say yes during `./setup.sh` and the Dream Sequence schedules
@@ -126,7 +125,6 @@ Code matches it against the folder the session started in.
 | `kb-dream` | The Dream Sequence: ingest new files + full lint (contradictions, orphans, stale) |
 | `kb-session-capture` | Save chat takeaways as structured session notes |
 | `kb-auto-session` | Capture pending sessions flagged by the Stop hook (or run by the Dream Sequence) |
-| `kb-weekly-review` | Weekly maintenance report: vague tags, duplicates, orphans, inbox backlog, memory audit |
 | `kb-update` | Update profile/goals when your context changes (change log + cascade) |
 | `kb-plan` | Gated 6-phase workflow for building brain features (explore → verify) |
 | `kb-skill-add` | Meta-skill: add a new shared skill correctly |
@@ -214,7 +212,7 @@ from its `summary:` field). Full lint any time: `python3 -I .overmind/brain_lint
   in the next. Add `"autoMemoryDirectory": "~/.claude/memory"` to
   `~/.claude/settings.json` for one shared pool. Only the first 200 lines (25 KB) of
   `MEMORY.md` load at startup: keep it short, tag lines by track, move standing
-  rules to `~/.claude/rules/`. The weekly review audits it.
+  rules to `~/.claude/rules/`. The Dream Sequence audits it.
 
 ## Merge Mode (re-running setup)
 
@@ -243,11 +241,11 @@ scan is skipped with a warning.
 
 | Status | Item | Notes |
 |---|---|---|
-| ✅ | Core KB + 10 skills | Ingest, query, dream, session, update, plan, skill-add, auto-session, onboard, weekly-review |
+| ✅ | Core KB + 9 skills | Ingest, query, dream (incl. weekly review), session, update, plan, skill-add, auto-session, onboard |
 | ✅ | 6 subagents (2 brain + 4 dev) | kb-digest, kb-linter, researcher, code-reviewer, bug-fixer, implementer |
 | ✅ | Multi-agent wiring | OpenCode + Claude Code + generic AGENT-PROMPT |
 | ✅ | Safety hooks | JSON guard, path boundaries, secrets, push block, audit log, pre-edit backup |
-| ✅ | Automation | Cron dream sequence, dry-run, config tracking |
+| ✅ | Automation | brain-maint.sh: scripted checks + agent dream, lock, log rotation, status files, doctor.py |
 | ✅ | Auto-save session | Stop hook → pending markers → kb-auto-session |
 | ✅ | Search (built-in) | kb-search.py — BM25 + recency, zero deps |
 | ✅ | Media ingestion | PDF (pdftotext), DOCX (pandoc), audio/video (whisper) |

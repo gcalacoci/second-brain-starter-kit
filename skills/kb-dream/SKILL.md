@@ -1,36 +1,63 @@
 ---
 name: kb-dream
-description: Run the Dream Sequence (lint and health check) on the Second Brain knowledge base at {{WORKSPACE_DIR}}. Ingests new raw files, finds contradictions, orphans, stale claims, and missing pages. Use when the user says "dream sequence" or on the scheduled cadence.
+description: Run the Dream Sequence (maintenance, lint and health check) on the Second Brain knowledge base at {{WORKSPACE_DIR}}. Scripted checks first, then ingest of new files, contradictions, stale claims, orphans, duplicates, missing pages, identity staleness, memory audit and a report. Use when the user says "dream sequence", "weekly review", or on the scheduled run (brain-maint).
 ---
 
-# KB Dream Sequence
+# KB Dream Sequence (maintenance)
 
-Lint and health-check the Second Brain knowledge base at `{{WORKSPACE_DIR}}/`.
+One maintenance flow for `{{WORKSPACE_DIR}}/`. The scheduled job
+`.overmind/brain-maint.sh` runs part A as scripts and hands the results to part B. By hand,
+run part A yourself first: `{{WORKSPACE_DIR}}/.overmind/brain-maint.sh --dry-run` (no agent
+call; writes only its log).
 
-## Steps
+## A. Scripted checks (brain-maint.sh; read the output, don't redo them by hand)
 
-1. Read `{{WORKSPACE_DIR}}/SCHEMA.md` (source of truth).
-2. **Ingest new raw files**: list `raw/sources/`, compare against `wiki/processed.md`. Ingest anything new (follow the kb-ingest flow for each).
-3. **Find contradictions**: compare claims across pages on the same topic/entity. Flag or reconcile each conflict; if you reconcile, update both pages.
-4. **Detect stale content**: claims superseded by newer sources. Update the page and note the change in its body.
-5. **Find orphans**: pages in `raw/pages/` with no inbound `[[wikilink]]` or index entry. Link them from related pages or flag them.
-6. **Find missing pages**: concepts or entities mentioned repeatedly but without their own page. Create them or flag them as gaps.
-7. **Regenerate the index**: `python3 -I .overmind/indexgen.py`.
-8. **Run the linter**: `python3 -I .overmind/brain_lint.py` (frontmatter, duplicate ids, dangling links, index, log); fix the errors, judge the warnings.
-9. Put the summary of findings and fixes in the commit message body: it becomes the log entry.
-10. Update `last-run` in `.overmind/config.yaml` (dream section) to today.
-11. Commit only the files you changed: `git -C {{WORKSPACE_DIR}} add <paths> && git -C {{WORKSPACE_DIR}} commit -m "chore: dream health check <YYYY-MM-DD>"`. The pre-commit gate runs; fix what it refuses. **Local-only repo, never push.**
+- `brain_lint.py`: frontmatter, `wiki/` files, sources ↔ processed, index ↔ pages,
+  dangling links, log headings (errors, and warning counts per code).
+- `indexgen.py --check`: is `wiki/index.md` current?
+- Inbox backlog: files in `inbox/`, and those older than 7 days.
+- Memory index (Claude Code auto-memory, skipped when there is none): `MEMORY.md` size,
+  index lines without a file, files without an index line.
+- Cron status and `doctor.py`: last result of every scheduled job, git gates on.
 
+## B. Judgement
+
+1. Read `SCHEMA.md`.
+2. **Fix scripted errors** you can fix with confidence (lint errors; stale index: run
+   `python3 -I .overmind/indexgen.py`; missing `summary:` lines); list the rest in the report.
+3. **Ingest new files**: anything in `inbox/`, or in `raw/sources/` but missing from
+   `wiki/processed.md` (kb-ingest flow for each).
+4. **Contradictions and stale claims**: compare claims across pages on the same
+   topic/entity; reconcile (update both pages) or add a `## ⚠️ Conflict` note when it needs
+   the user. A claim superseded by a newer source: update the page and say so in its body.
+5. **Orphans, duplicates, missing pages, weak tags**: pages nothing links to, pages with
+   similar titles or summaries, concepts mentioned often without a page, pages with fewer
+   than 2 tags. Link, merge, create or flag.
+6. **Identity staleness**: `knowledge/user/profile.md` and `goals.md` with `last_reviewed`
+   older than 90 days (or missing) → flag "say 'update my profile' if anything changed";
+   `knowledge/problems/` with `status: active` and no mention in 90 days → possibly parked.
+7. **Memory audit** (Claude Code; skip if there is no auto-memory): from part A plus a read
+   of the memory folder (`autoMemoryDirectory` in `~/.claude/settings.json`, else
+   `~/.claude/projects/*/memory/`): `MEMORY.md` ≤ 120 lines, no memory that repeats a rule
+   in `~/.claude/rules/`, state/todo memories not older than the latest session note, the
+   same fact not saved in several places. Propose merges, trims and promotions to rules;
+   the user decides.
+8. **Report**: `outputs/reports/YYYY-MM-DD-brain-maint.md` with sections: Scripted checks,
+   Fixed, Flagged (needs the user), Identity, Memory.
+9. Update `last-run` in `.overmind/config.yaml` (dream section) to today.
+10. Commit only the files you changed: `git -C {{WORKSPACE_DIR}} add <paths> && git -C
+    {{WORKSPACE_DIR}} commit -m "chore: dream <YYYY-MM-DD>"`, with the summary of findings
+    and fixes in the body (the commit message is the log entry). The pre-commit gate runs;
+    fix what it refuses. **Local-only repo, never push.**
 
 ## Delegation (recommended at scale)
 
-Past ~50 pages, delegate the sweep to the `kb-linter` subagent (read-only,
-returns structured findings) and apply its `proposed_fix` items yourself.
-Keep the main context for judgment calls — the subagent does the bulk reading.
+Past ~50 pages, the `kb-linter` subagent (read-only, returns structured findings) can do
+the bulk reading for steps 4–5; apply its `proposed_fix` items yourself. Keep the main
+context for judgement calls.
 
 ## Rules
 
 - Never touch `private/`, never edit existing `raw/sources/` files.
-- Fix what you can confidently fix; FLAG the rest in the log entry rather than guessing.
-- Contradictions that need a human decision get a `## ⚠️ Conflict` note on the affected page(s) plus a log entry.
-- Report a short summary to the user at the end: what was ingested, fixed, and flagged.
+- Fix what you can confidently fix; flag the rest in the report rather than guessing.
+- End with a short summary to the user: ingested, fixed, flagged.

@@ -153,7 +153,9 @@ install_kit_file "$SCRIPT_DIR/templates/skills-README.md" "$WORKSPACE_DIR/skills
 # wiki/index.md is built from page frontmatter (indexgen.py); wiki/log.md from git log
 # (loggen.py, run by the post-commit hook). Neither is edited by hand.
 mkdir -p "$WORKSPACE_DIR/.overmind/git-hooks"
-for tool in brain_lint.py githook.py indexgen.py loggen.py; do
+mkdir -p "$WORKSPACE_DIR/.overmind/lib"
+install_kit_file "$SCRIPT_DIR/overmind/lib/cron.sh" "$WORKSPACE_DIR/.overmind/lib/cron.sh"
+for tool in brain_lint.py githook.py indexgen.py loggen.py doctor.py brain-maint.sh; do
     install_kit_file "$SCRIPT_DIR/overmind/$tool" "$WORKSPACE_DIR/.overmind/$tool"
     chmod 0755 "$WORKSPACE_DIR/.overmind/$tool"
 done
@@ -189,7 +191,7 @@ git:
   local-only: true
   remote: null
 EOF
-# If config.yaml already exists (merge), the dream-cron step may have recorded
+# If config.yaml already exists (merge), the scheduling step may have recorded
 # schedule/runner keys into it — those edits must survive, so skip the install
 # entirely instead of letting install_kit_file file a .kit-new for it.
 if [[ -f "$WORKSPACE_DIR/.overmind/config.yaml" ]] && grep -q "schedule:" "$WORKSPACE_DIR/.overmind/config.yaml" 2>/dev/null; then
@@ -452,6 +454,9 @@ if [[ ! -d .git ]]; then
 wiki/log.md
 # files kept out of git on purpose (the pre-commit gate refuses them too)
 private/
+__pycache__/
+# cron logs and cost CSV (brain-maint.sh)
+.overmind/logs/
 EOF
     git add -A
     git commit -q -m "chore: init second brain knowledge base (local-only git)"
@@ -498,17 +503,12 @@ if [[ ! $REPLY =~ ^[Nn]$ ]]; then
     echo "  ! No agent CLI found (opencode or claude). Skipping schedule — run 'dream sequence' manually."
   else
     mkdir -p "$WORKSPACE_DIR/.overmind/logs"
-    sed -e "s|{{KB_DIR}}|$WORKSPACE_DIR|g" \
-        -e "s|{{AGENT_BIN}}|$AGENT_BIN|g" \
-        -e "s|{{AGENT_NAME}}|$AGENT_NAME|g" \
-        -e "s|{{AGENT_PATH}}|$PATH|g" \
-        "$SCRIPT_DIR/templates/dream-cron.sh" > "$WORKSPACE_DIR/.overmind/dream-cron.sh"
-    chmod +x "$WORKSPACE_DIR/.overmind/dream-cron.sh"
-
-    # Install/update the cron entry (idempotent — replaces previous brain entries)
+    # Install/update the cron entry (idempotent — replaces previous brain entries,
+    # including the old dream-cron.sh line). The agent and your login PATH travel in
+    # the line itself: cron starts with a minimal environment.
     CRON_BLOCK="# second-brain-dream
-$SCHEDULE $WORKSPACE_DIR/.overmind/dream-cron.sh"
-    ( crontab -l 2>/dev/null | grep -v "second-brain-dream" | grep -v "dream-cron.sh" ; echo "$CRON_BLOCK" ) | crontab - 2>/dev/null \
+$SCHEDULE AGENT=$AGENT_NAME AGENT_BIN='$AGENT_BIN' CRON_PATH='$PATH' $WORKSPACE_DIR/.overmind/brain-maint.sh"
+    ( crontab -l 2>/dev/null | grep -v "second-brain-dream" | grep -v "dream-cron.sh" | grep -v "brain-maint.sh" ; echo "$CRON_BLOCK" ) | crontab - 2>/dev/null \
       && echo "  Cron installed: $CADENCE ($SCHEDULE) via $AGENT_NAME" \
       || echo "  ! crontab not available — schedule manually (see MANUAL.md)"
     SCHEDULED=1
@@ -593,5 +593,8 @@ echo "Pause anytime — run /onboard again to resume."
 if [[ $SCHEDULED -eq 1 ]]; then
   echo ""
   echo "Dream Sequence scheduled ($CADENCE). Logs: $WORKSPACE_DIR/.overmind/logs/"
-  echo "Test the wiring anytime: $WORKSPACE_DIR/.overmind/dream-cron.sh --dry-run"
+  echo "Test the wiring anytime: $WORKSPACE_DIR/.overmind/brain-maint.sh --dry-run"
+  if [[ -f "$WORKSPACE_DIR/.overmind/dream-cron.sh" ]]; then
+    echo "The old .overmind/dream-cron.sh is no longer used (brain-maint.sh replaced it); you can trash it."
+  fi
 fi

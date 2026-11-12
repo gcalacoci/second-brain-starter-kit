@@ -19,8 +19,7 @@ operating manual every agent follows.
 - `what do I know about ___` — query with citations
 - `save that` — persist an answer as a page
 - `save this session` — capture chat takeaways
-- `dream sequence` — lint + ingest new inbox files
-- `weekly review` — maintenance report
+- `dream sequence` (or `weekly review`) — maintenance: ingest new inbox files, lint, report
 
 ## Wiki
 

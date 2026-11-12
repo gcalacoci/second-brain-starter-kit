@@ -13,6 +13,6 @@ Quick commands:
 - "save this session" → capture conversation takeaways (kb-session-capture skill)
 - "save that" → persist current answer as a new page
 - "dream sequence" → lint/health check (kb-dream skill)
-- "weekly review" → maintenance report (kb-weekly-review skill)
+- "weekly review" → same as "dream sequence" (kb-dream skill)
 
 Git is local-only. Never push this repo.

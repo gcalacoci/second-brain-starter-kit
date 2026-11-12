@@ -312,6 +312,5 @@ Your Second Brain is ready. Key commands:
 - `what do I know about ___` — query with citations
 - `save this session` — capture conversation
 - `save that` — persist current answer
-- `dream sequence` — weekly lint + health check
-- `weekly review` — spot gaps, orphans, stale content
+- `dream sequence` (or `weekly review`) — weekly lint, health check, gaps, orphans, stale content
 - `/onboard` — restart onboarding if needed

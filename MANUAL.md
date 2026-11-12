@@ -15,7 +15,7 @@ Print this or keep it handy. These are the commands you'll use daily.
 | `save that` | Persists the current answer as a new topic page | (part of `kb-query`) |
 | `save this session` | Captures chat takeaways into session notes | `kb-session-capture` |
 | `dream sequence` | Lint + ingest new inbox files + find contradictions/orphans | `kb-dream` |
-| `weekly review` | Maintenance report: stale content, vague tags, backlog | `kb-weekly-review` |
+| `weekly review` | Same as `dream sequence` (one maintenance flow) | `kb-dream` |
 | `update my profile` / `I changed jobs` | Updates identity files with change log, cascades to goals/pages | `kb-update` |
 | `add a skill` / `add this workflow` | Creates a new shared skill any agent can use | `kb-skill-add` |
 | `/onboard` | Guided setup: focus, favorite problems, goals, seeds | `onboard` |
@@ -117,22 +117,9 @@ dream sequence
 
 ### `weekly review`
 
-A lighter, report-focused check:
-
-```
-weekly review
-```
-
-**What you get:**
-- Identity staleness check (profile/goals not reviewed in 90+ days)
-- Pages with vague/missing tags
-- Orphan pages
-- Duplicate content candidates
-- Inbox backlog (files older than 7 days)
-
-Output goes to `outputs/reports/YYYY-MM-DD-weekly-review.md`.
-
-**When to use:** Alternate with `dream sequence` — one week dream, one week review.
+Another name for `dream sequence`: the weekly review's checks (identity staleness,
+vague tags, orphans, duplicates, inbox backlog, memory audit) are part of the Dream
+Sequence now. Report: `outputs/reports/YYYY-MM-DD-brain-maint.md`.
 
 ---
 
@@ -439,28 +426,30 @@ If you said yes, a cron entry now runs it automatically:
 | Weekly (default) | Every Friday at 17:00 |
 | Daily | Every day at 09:00 |
 
-**What the cron job does:** runs your agent headlessly (OpenCode or Claude Code,
-whichever was found), which loads the `kb-dream` skill and executes the full
-sequence: ingest new inbox files, lint, update index/log, commit locally.
+**What the cron job does:** `.overmind/brain-maint.sh` runs scripted checks first
+(lint, index, inbox backlog, memory index, cron status, `doctor.py`), then your agent
+headless (OpenCode or Claude Code, whichever was found) with the `kb-dream` skill and
+those results: ingest new inbox files, fix and flag, write the report, commit locally.
 
 **Where things live:**
 
 | Thing | Path |
 |---|---|
-| Runner script | `~/prj/second-brain/.overmind/dream-cron.sh` |
-| Run logs | `~/prj/second-brain/.overmind/logs/dream-YYYY-MM-DD.log` |
+| Runner script | `~/prj/second-brain/.overmind/brain-maint.sh` |
+| Run logs | `~/prj/second-brain/.overmind/logs/brain-maint-YYYY-MM-DD.log` |
+| Health view | `python3 -I ~/prj/second-brain/.overmind/doctor.py` |
 | Cron entry | `crontab -l` (marked with `# second-brain-dream`) |
 | Config record | `.overmind/config.yaml` → `dream.schedule`, `dream.runner` |
 
 **Useful commands:**
 
 ```bash
-# Test the wiring without mutating anything
-~/prj/second-brain/.overmind/dream-cron.sh --dry-run
+# Test the wiring: scripted checks only, no agent call
+~/prj/second-brain/.overmind/brain-maint.sh --dry-run
 
 # See when it last ran and what it did
 ls -la ~/prj/second-brain/.overmind/logs/
-tail -20 ~/prj/second-brain/.overmind/logs/dream-$(date +%F).log
+tail -20 ~/prj/second-brain/.overmind/logs/brain-maint-$(date +%F).log
 
 # Change the cadence: edit the crontab, then update config.yaml to match
 crontab -e    # find the "# second-brain-dream" block
@@ -523,9 +512,9 @@ WHERE file.mtime < date(today) - dur(90 days)
 | Agent doesn't know the brain exists | Paste the agent prompt (see `AGENT-PROMPT.md`) |
 | Skills not loading | Claude Code needs one symlink per skill (`~/.claude/skills/<skill-id>`) — re-run `./setup.sh` to rebuild them. OpenCode needs the `skills` entry in its config (see Multi-Agent table) |
 | "processed.md says X is ingested but I don't see it" | Check `raw/sources/` — the raw file is the source of truth |
-| Profile feels stale | Say "update my profile" or run `weekly review` |
+| Profile feels stale | Say "update my profile" or run `dream sequence` |
 | Too many orphan pages | Run `dream sequence` — it links or flags them |
-| Inbox backlog | Run `dream sequence` or `weekly review` |
+| Inbox backlog | Run `dream sequence` |
 | Scheduled dream didn't run | Check `~/prj/second-brain/.overmind/logs/`; common causes: machine was off/asleep, agent CLI missing from PATH in the script, or headless permission errors (Claude needs `--dangerously-skip-permissions` or a settings allowlist) |
 | Want to change the schedule | `crontab -e` → edit the `# second-brain-dream` block; mirror the change in `.overmind/config.yaml` |
 | A page has a `⚠️ Merge Note` section | Two agents edited the page and the merge was ambiguous. Read the note — it explains both versions and the resolution chosen. Fix manually if the choice was wrong; the note is history, keep it |

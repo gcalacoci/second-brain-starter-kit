@@ -25,14 +25,15 @@ answer filed back.
 {{WORKSPACE_DIR}}/
 │
 ├── SCHEMA.md                  ← this file (the schema)
-├── inbox/                     ← quick capture; processed by dream sequence / weekly review
+├── inbox/                     ← quick capture; processed by ingest / dream sequence
 ├── private/                   ← personal documents kept out of git (never committed)
 ├── skills/                    ← shared skill library (see Skills section)
 ├── scripts/                   ← utility scripts (search, stats, media)
 │
 ├── .overmind/
 │   ├── config.yaml
-│   ├── brain_lint.py, indexgen.py, loggen.py, githook.py
+│   ├── brain_lint.py, indexgen.py, loggen.py, githook.py, doctor.py
+│   ├── brain-maint.sh, lib/cron.sh  ← scheduled maintenance
 │   └── git-hooks/             ← pre-commit, commit-msg, post-commit
 │
 ├── raw/
@@ -108,7 +109,7 @@ Rules:
 - Updates go through the `kb-update` skill; identity files are never silently
   rewritten by an agent. If a user statement contradicts the profile mid-session,
   the agent proposes an update instead of applying it.
-- `last_reviewed` in frontmatter tracks freshness; `kb-weekly-review` flags
+- `last_reviewed` in frontmatter tracks freshness; the Dream Sequence (`kb-dream`) flags
   identity files not reviewed in 90+ days.
 
 ## Frontmatter Conventions
@@ -215,7 +216,6 @@ way this schema is the source of truth for KB conventions.
 | `kb-query` | Answer a question from the brain with citations |
 | `kb-dream` | Run the Dream Sequence (lint / health check) |
 | `kb-session-capture` | Save chat takeaways into the brain |
-| `kb-weekly-review` | Weekly maintenance report (tags, orphans, duplicates, backlog) |
 | `kb-update` | Update profile/goals/problems when the user's context changes (change log + cascade) |
 | `kb-auto-session` | Auto-capture session takeaways from Stop-hook markers or on "save this session" |
 | `kb-plan` | Gated 6-phase workflow for building brain features |
@@ -350,13 +350,20 @@ if needed — never to a public host.
 
 The Dream Sequence runs on a schedule via cron (installed at setup):
 
-- Runner script: `.overmind/dream-cron.sh` (headless agent invocation)
-- Logs: `.overmind/logs/dream-YYYY-MM-DD.log`
-- Schedule recorded in `.overmind/config.yaml` → `dream.schedule`, `dream.runner`
-- Current schedule: see the `# second-brain-dream` block in `crontab -l`
+- Runner: `.overmind/brain-maint.sh`. Part A runs scripted checks (lint, index, inbox
+  backlog, memory index, cron status, `doctor.py`); part B runs your agent headless with
+  the `kb-dream` skill and part A's output. Shared cron helpers (lock, log rotation,
+  status file, failure notice): `.overmind/lib/cron.sh`.
+- Logs: `.overmind/logs/brain-maint-YYYY-MM-DD.log` (kept 30 days); Claude costs in
+  `.overmind/logs/claude-costs.csv`; last result per job in
+  `~/.local/state/cron-status/<job>.json`.
+- Health at a glance: `python3 -I .overmind/doctor.py` (OK / WARN / FAIL).
+- Failure notices: put an executable `.overmind/notify.sh` that takes one message
+  argument (mail, desktop notification, chat bot); without it, nothing is sent.
+- Schedule recorded in `.overmind/config.yaml` → `dream.schedule`, `dream.runner`;
+  the entry itself is the `# second-brain-dream` block in `crontab -l`.
 
 When running unattended, the agent must still follow this schema, load the
-`kb-dream` skill, and commit locally. The runner never pushes. After each run,
-`dream.last-run` in config.yaml is updated. Test the wiring anytime with
-`.overmind/dream-cron.sh --dry-run`. If the schedule misses (machine off), trigger
-manually with "dream sequence" — same flow.
+`kb-dream` skill, and commit locally. The runner never pushes. Test the wiring anytime
+with `.overmind/brain-maint.sh --dry-run` (part A only). If the schedule misses
+(machine off), trigger manually with "dream sequence" — same flow.

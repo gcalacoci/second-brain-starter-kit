@@ -34,7 +34,7 @@ You are now operating with access to a **Second Brain knowledge base** — a sel
 | `save that` | (part of `kb-query`) | Persist answer as new topic page |
 | `save this session` | `kb-session-capture` | Write session note, update affected pages |
 | `dream sequence` | `kb-dream` | Lint + ingest new inbox files + find contradictions |
-| `weekly review` | `kb-weekly-review` | Maintenance report (staleness, orphans, backlog) |
+| `weekly review` | `kb-dream` | Same flow as `dream sequence` |
 | `update my profile` / `I changed jobs` | `kb-update` | Update identity files with change log, cascade |
 | `/onboard` | `onboard` | Guided setup (focus, problems, goals, seeds) |
 | `/kb-plan <what>` | `kb-plan` | Gated 6-phase workflow for building features |

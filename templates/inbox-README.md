@@ -14,7 +14,7 @@ three-layer system: Inbox → Processed Knowledge → Index.
 ## How it works
 
 1. Dump here first, don't organize.
-2. Run `dream sequence` or weekly review, and the agent will move items from here
+2. Run `dream sequence` (or say "add this"), and the agent will move items from here
    into `raw/sources/` (untouched) and create the processed pages in `raw/pages/`.
 3. Processed entries are removed from inbox after ingestion.
 
