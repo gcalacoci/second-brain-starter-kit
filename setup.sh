@@ -222,7 +222,12 @@ for skill_dir in "$SCRIPT_DIR"/skills/*/; do
     skill_id=$(basename "$skill_dir")
     mkdir -p "$WORKSPACE_DIR/skills/$skill_id"
     for skill_file in "$skill_dir"/*; do
-        install_kit_file "$skill_file" "$WORKSPACE_DIR/skills/$skill_id/$(basename "$skill_file")"
+        [[ -f "$skill_file" ]] || continue
+        # Render the workspace path first, so merge mode compares like with like.
+        SKILL_TMP="$(mktemp)"
+        sed -e "s|{{WORKSPACE_DIR}}|$WORKSPACE_DIR|g" "$skill_file" > "$SKILL_TMP"
+        install_kit_file "$SKILL_TMP" "$WORKSPACE_DIR/skills/$skill_id/$(basename "$skill_file")"
+        rm -f "$SKILL_TMP"
     done
 done
 
@@ -292,7 +297,13 @@ sed -e "s|{{WORKSPACE_DIR}}|$WORKSPACE_DIR|g" \
     "$SCRIPT_DIR/templates/second-brain-rules.md" > "$RULES_TMP"
 install_kit_file "$RULES_TMP" "$HOME/.claude/rules/second-brain-rules.md"
 rm -f "$RULES_TMP"
-echo "  Claude Code rules installed at ~/.claude/rules/second-brain-rules.md"
+# Generic working rules (all projects). session-collaboration.md is opt-in: it only
+# helps when several long-lived sessions share the brain.
+for rule in safety.md time-estimates.md working-habits.md; do
+    install_kit_file "$SCRIPT_DIR/templates/rules/$rule" "$HOME/.claude/rules/$rule"
+done
+echo "  Claude Code rules installed in ~/.claude/rules/: second-brain-rules, safety, time-estimates, working-habits"
+echo "  Several sessions on one brain? cp $SCRIPT_DIR/templates/rules/session-collaboration.md ~/.claude/rules/"
 
 # Claude Code skill discovery: one symlink per skill.
 # Claude Code only discovers ~/.claude/skills/<skill-id>/SKILL.md — a single
@@ -439,6 +450,8 @@ if [[ ! -d .git ]]; then
 .env*
 # generated from git log by .overmind/loggen.py
 wiki/log.md
+# files kept out of git on purpose (the pre-commit gate refuses them too)
+private/
 EOF
     git add -A
     git commit -q -m "chore: init second brain knowledge base (local-only git)"

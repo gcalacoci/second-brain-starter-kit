@@ -26,11 +26,14 @@ answer filed back.
 │
 ├── SCHEMA.md                  ← this file (the schema)
 ├── inbox/                     ← quick capture; processed by dream sequence / weekly review
+├── private/                   ← personal documents kept out of git (never committed)
 ├── skills/                    ← shared skill library (see Skills section)
 ├── scripts/                   ← utility scripts (search, stats, media)
 │
 ├── .overmind/
-│   └── config.yaml
+│   ├── config.yaml
+│   ├── brain_lint.py, indexgen.py, loggen.py, githook.py
+│   └── git-hooks/             ← pre-commit, commit-msg, post-commit
 │
 ├── raw/
 │   ├── sources/               ← immutable raw dumps (links, articles, notes, PDFs)
@@ -60,10 +63,16 @@ answer filed back.
 ### Hard rules
 
 - `wiki/` contains ONLY `index.md`, `log.md`, `processed.md`. Never put content there.
-- `raw/sources/` is IMMUTABLE. Once a file lands there it is never edited or deleted.
+- `raw/sources/` is IMMUTABLE. Once a file lands there it is never edited, renamed or
+  deleted; a correction is a new file. The pre-commit gate enforces it.
 - All content pages live in `raw/pages/`, never in `wiki/`.
 - Every content page has YAML frontmatter (see Frontmatter Conventions).
 - New captures go to `inbox/` first; ingestion moves them into `raw/sources/` + pages.
+- An ingest never discards an original: what does not go to `raw/sources/` goes
+  untouched to `private/<date>-<name>/`, and the commit message says where. Deleting
+  anything the user provided needs their explicit OK.
+- `private/` is never committed (git-ignored, and the pre-commit gate refuses it). Pages
+  carry summaries only: no ID numbers, bank details, addresses or health data.
 
 ## Knowledge Layer (meta)
 

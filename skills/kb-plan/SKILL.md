@@ -6,7 +6,7 @@ allowed-tools: [Read, Write, Edit, Bash, Web, AskUserQuestion]
 
 # /kb-plan — Second Brain Build Workflow
 
-A gated, phased workflow for building changes to your Second Brain at ~/prj/second-brain/. Starts small, expands safely.
+A gated, phased workflow for building changes to your Second Brain at {{WORKSPACE_DIR}}/. Starts small, expands safely.
 
 ---
 

@@ -127,7 +127,7 @@ Wait for explicit confirmation. Adjust if they correct you.
 
 1. Log: the commit message is the log line (wiki/log.md is generated from git log after each commit; never edit it).
 2. Commit:
-   `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "docs: update <short description>"`
+   `git -C {{WORKSPACE_DIR}} add -A && git -C {{WORKSPACE_DIR}} commit -m "docs: update <short description>"`
    (local-only repo, never push)
 
 ### Step 7: Summarize

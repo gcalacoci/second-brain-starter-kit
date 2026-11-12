@@ -107,7 +107,7 @@ The same brain is operated by any agent:
 
 | Agent | How it finds the brain | How it finds the skills |
 |---|---|---|
-| **Claude Code** | `~/prj/CLAUDE.md` shim → `SCHEMA.md`; `~/.claude/rules/second-brain-rules.md` | one `~/.claude/skills/<skill-id>` symlink per skill |
+| **Claude Code** | `~/prj/CLAUDE.md` shim → `SCHEMA.md`; `~/.claude/rules/`: second-brain-rules, safety, time-estimates, working-habits (session-collaboration opt-in) | one `~/.claude/skills/<skill-id>` symlink per skill |
 | **OpenCode** | `~/.opencode/instructions.md` shim → `SCHEMA.md` | `skills: ["~/prj/second-brain/skills"]` in `~/.config/opencode/opencode.json` |
 | **Any other agent** | "Read `~/prj/second-brain/SCHEMA.md` and follow it" | Read a `SKILL.md` directly |
 
@@ -153,11 +153,29 @@ The built-in `kb-search.py` (pure Python, zero deps, BM25 + recency + title/tag 
 | Scale | Recommended | How |
 |---|---|---|
 | 0–200 pages | Built-in `kb-search.py` (already works) | Zero deps, instant |
-| 200–1000 | `qmd` (Karpathy's pick, MCP built-in) | `cargo install qmd && qmd index raw/pages` |
+| 200–1000 | [`qmd`](https://github.com/tobi/qmd) (MIT, BM25 + optional vectors, CLI) | see below |
 | 1000+ | Meilisearch | `docker run meilisearch` + MCP |
 | Team / multi-user | Meilisearch Cloud / Typesense Cloud | Managed, auth, multi-tenant |
 
 No search engine required until you feel the need — `kb-search.py` works out of the box.
+
+**qmd, optional.** Skills search with qmd when it is on the PATH and fall back to
+`kb-search.py` otherwise; the post-commit hook keeps its index current.
+
+```bash
+npm install -g @tobilu/qmd --ignore-scripts   # BM25 needs none of the native install scripts
+# then add the brain as a collection named "brain" in ~/.config/qmd/index.yml:
+#   collections:
+#     brain:
+#       path: <your workspace>
+#       pattern: "**/*.md"
+#       ignore: [private/**, inbox/**]
+qmd update && qmd search "some keywords" -n 5 --files
+```
+
+Keep `private/` out of the index: search snippets end up in drafts you send out. Pin a
+version you have checked (`@tobilu/qmd@<version>`); vectors and reranking download models
+from Hugging Face, plain `qmd search` needs no network.
 
 ## Git Policy
 

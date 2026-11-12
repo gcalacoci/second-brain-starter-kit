@@ -1,15 +1,15 @@
 ---
 name: kb-dream
-description: Run the Dream Sequence (lint and health check) on the Second Brain knowledge base at ~/prj/second-brain. Ingests new raw files, finds contradictions, orphans, stale claims, and missing pages. Use when the user says "dream sequence" or on the scheduled cadence.
+description: Run the Dream Sequence (lint and health check) on the Second Brain knowledge base at {{WORKSPACE_DIR}}. Ingests new raw files, finds contradictions, orphans, stale claims, and missing pages. Use when the user says "dream sequence" or on the scheduled cadence.
 ---
 
 # KB Dream Sequence
 
-Lint and health-check the Second Brain knowledge base at `~/prj/second-brain/`.
+Lint and health-check the Second Brain knowledge base at `{{WORKSPACE_DIR}}/`.
 
 ## Steps
 
-1. Read `~/prj/second-brain/SCHEMA.md` (source of truth).
+1. Read `{{WORKSPACE_DIR}}/SCHEMA.md` (source of truth).
 2. **Ingest new raw files**: list `raw/sources/`, compare against `wiki/processed.md`. Ingest anything new (follow the kb-ingest flow for each).
 3. **Find contradictions**: compare claims across pages on the same topic/entity. Flag or reconcile each conflict; if you reconcile, update both pages.
 4. **Detect stale content**: claims superseded by newer sources. Update the page and note the change in its body.
@@ -19,7 +19,7 @@ Lint and health-check the Second Brain knowledge base at `~/prj/second-brain/`.
 8. **Run the linter**: `python3 -I .overmind/brain_lint.py` (frontmatter, duplicate ids, dangling links, index, log); fix the errors, judge the warnings.
 9. Put the summary of findings and fixes in the commit message body: it becomes the log entry.
 10. Update `last-run` in `.overmind/config.yaml` (dream section) to today.
-11. Commit: `git -C ~/prj/second-brain add -A && git -C ~/prj/second-brain commit -m "chore: dream health check <YYYY-MM-DD>"` — **local-only repo, never push.**
+11. Commit only the files you changed: `git -C {{WORKSPACE_DIR}} add <paths> && git -C {{WORKSPACE_DIR}} commit -m "chore: dream health check <YYYY-MM-DD>"`. The pre-commit gate runs; fix what it refuses. **Local-only repo, never push.**
 
 
 ## Delegation (recommended at scale)
@@ -30,6 +30,7 @@ Keep the main context for judgment calls — the subagent does the bulk reading.
 
 ## Rules
 
+- Never touch `private/`, never edit existing `raw/sources/` files.
 - Fix what you can confidently fix; FLAG the rest in the log entry rather than guessing.
 - Contradictions that need a human decision get a `## ⚠️ Conflict` note on the affected page(s) plus a log entry.
 - Report a short summary to the user at the end: what was ingested, fixed, and flagged.
