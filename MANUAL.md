@@ -440,7 +440,7 @@ If you said yes, a cron entry now runs it automatically:
 | Daily | Every day at 09:00 |
 
 **What the cron job does:** `.overmind/brain-maint.sh` runs scripted checks first
-(lint, index, inbox backlog, memory index, cron status, `doctor.py`), then your agent
+(lint, index, inbox backlog, memory index, cron status, `doctor.py`, unsaved sessions), then your agent
 headless (OpenCode or Claude Code, whichever was found) with the `kb-dream` skill and
 those results: ingest new inbox files, fix and flag, write the report, commit locally.
 

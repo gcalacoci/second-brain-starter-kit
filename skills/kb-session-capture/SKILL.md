@@ -1,6 +1,6 @@
 ---
 name: kb-session-capture
-description: Save takeaways from the current conversation into the Second Brain knowledge base at {{WORKSPACE_DIR}}. Use when the user says "save this session" at the end of a substantive chat.
+description: Save takeaways from the current conversation into the Second Brain knowledge base at {{WORKSPACE_DIR}}. Use when the user says "save this session" at the end of a substantive chat, or "save the session <name>" for an unsaved session the Dream Sequence listed.
 ---
 
 # KB Session Capture
@@ -22,6 +22,16 @@ Capture the key takeaways of the current conversation into the Second Brain at `
 5. New pages get a one-line `summary:`; run `python3 -I .overmind/indexgen.py` (wiki/index.md is generated; each line is the page's `summary:` field).
 6. (Log: the commit message is the log line (wiki/log.md is generated from git log after each commit; never edit it).)
 7. Commit: `git -C {{WORKSPACE_DIR}} status`, then `git -C {{WORKSPACE_DIR}} add <paths you wrote> && git -C {{WORKSPACE_DIR}} commit -m "docs: session <short title>"` (shared tree: never `add -A`) — **local-only repo, never push.**
+
+## Saving another session (from its transcript)
+
+For "save the session <name>" (an unsaved session in the Dream Sequence report): read that
+session's transcript (`~/.claude/projects/<dir>/<session_id>.jsonl`, path in the report) in
+slices: what the user typed first (`python3 -I -c` with `.overmind/userwords.py`
+`is_user_typed`, which skips tool output, relays and summaries), then the last assistant
+replies. Run the steps above for that conversation, name the transcript in the note, and
+use `learned.py <transcript>` for the Learned step. Transcripts are personal data: never
+send them to an outside model or service.
 
 ## Rules
 

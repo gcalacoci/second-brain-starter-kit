@@ -155,7 +155,8 @@ install_kit_file "$SCRIPT_DIR/templates/skills-README.md" "$WORKSPACE_DIR/skills
 mkdir -p "$WORKSPACE_DIR/.overmind/git-hooks"
 mkdir -p "$WORKSPACE_DIR/.overmind/lib"
 install_kit_file "$SCRIPT_DIR/overmind/lib/cron.sh" "$WORKSPACE_DIR/.overmind/lib/cron.sh"
-for tool in brain_lint.py githook.py indexgen.py loggen.py doctor.py brain-maint.sh learned.py; do
+for tool in brain_lint.py githook.py indexgen.py loggen.py doctor.py brain-maint.sh learned.py \
+    userwords.py unsaved_sessions.py; do
     install_kit_file "$SCRIPT_DIR/overmind/$tool" "$WORKSPACE_DIR/.overmind/$tool"
     chmod 0755 "$WORKSPACE_DIR/.overmind/$tool"
 done
@@ -328,6 +329,13 @@ for skill_dir in "$WORKSPACE_DIR"/skills/*/; do
     fi
 done
 echo "  Claude Code skills linked: one symlink per skill in ~/.claude/skills/"
+# Skills retired by the kit (merge installs keep the brain's own copy and its link).
+for old in kb-auto-session kb-weekly-review; do
+    if [[ -d "$WORKSPACE_DIR/skills/$old" ]]; then
+        echo "  The kit retired $old (kb-dream and the unsaved-session scanner cover it); you can trash"
+        echo "    $WORKSPACE_DIR/skills/$old and the link ~/.claude/skills/$old"
+    fi
+done
 
 # OpenCode shim
 mkdir -p "$HOME/.opencode"
@@ -486,8 +494,9 @@ wiki/log.md
 # files kept out of git on purpose (the pre-commit gate refuses them too)
 private/
 __pycache__/
-# cron logs and cost CSV (brain-maint.sh)
+# cron logs and cost CSV (brain-maint.sh), scanner cache (unsaved_sessions.py)
 .overmind/logs/
+.overmind/state/
 EOF
     git add -A
     git commit -q -m "chore: init second brain knowledge base (local-only git)"

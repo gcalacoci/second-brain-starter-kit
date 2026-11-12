@@ -78,6 +78,8 @@ step "inbox backlog" inbox_backlog
 step "memory index" memory_audit
 step "cron status" cron_status
 step "doctor" python3 -I "$O/doctor.py"
+# Interactive sessions that did real work and were never saved: a list, no notes
+step "unsaved sessions (unsaved_sessions.py)" python3 -I "$O/unsaved_sessions.py" list
 
 summary="part A: ${#fails[@]} of $total checks failed"
 (( ${#fails[@]} )) && summary+=": $(IFS=,; echo "${fails[*]}")"

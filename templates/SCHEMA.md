@@ -34,6 +34,7 @@ answer filed back.
 │   ├── config.yaml
 │   ├── brain_lint.py, indexgen.py, loggen.py, githook.py, doctor.py
 │   ├── learned.py               ← save-point candidates (run by the context-warn hook)
+│   ├── unsaved_sessions.py, userwords.py  ← sessions that did work and were never saved
 │   ├── brain-maint.sh, lib/cron.sh  ← scheduled maintenance
 │   └── git-hooks/             ← pre-commit, commit-msg, post-commit
 │
@@ -218,7 +219,6 @@ way this schema is the source of truth for KB conventions.
 | `kb-dream` | Run the Dream Sequence (lint / health check) |
 | `kb-session-capture` | Save chat takeaways into the brain |
 | `kb-update` | Update profile/goals/problems when the user's context changes (change log + cascade) |
-| `kb-auto-session` | Auto-capture session takeaways from Stop-hook markers or on "save this session" |
 | `kb-plan` | Gated 6-phase workflow for building brain features |
 | `kb-skill-add` | Meta-skill: how to add a new shared skill |
 | `onboard` | Guided setup: focus, favorite problems, goals, first seeds |

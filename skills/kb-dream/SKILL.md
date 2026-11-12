@@ -19,6 +19,8 @@ call; writes only its log).
 - Memory index (Claude Code auto-memory, skipped when there is none): `MEMORY.md` size,
   index lines without a file, files without an index line.
 - Cron status and `doctor.py`: last result of every scheduled job, git gates on.
+- Unsaved sessions (`unsaved_sessions.py list`): interactive Claude Code sessions idle 12 h+
+  that did real work (a commit or 20+ turns) and have no later save point.
 
 ## B. Judgement
 
@@ -42,10 +44,15 @@ call; writes only its log).
    in `~/.claude/rules/`, state/todo memories not older than the latest session note, the
    same fact not saved in several places. Propose merges, trims and promotions to rules;
    the user decides.
-8. **Report**: `outputs/reports/YYYY-MM-DD-brain-maint.md` with sections: Scripted checks,
-   Fixed, Flagged (needs the user), Identity, Memory.
-9. Update `last-run` in `.overmind/config.yaml` (dream section) to today.
-10. Commit only the files you changed: `git -C {{WORKSPACE_DIR}} add <paths> && git -C
+8. **Unsaved sessions**: list each one in the report (name, last work, transcript path).
+   Never write a note for them unattended: the user either says "save the session <name>"
+   (kb-session-capture from that transcript) or dismisses it with
+   `python3 -I .overmind/unsaved_sessions.py dismiss <session_id>` (it comes back only after
+   new work).
+9. **Report**: `outputs/reports/YYYY-MM-DD-brain-maint.md` with sections: Scripted checks,
+   Fixed, Flagged (needs the user), Identity, Memory, Unsaved sessions.
+10. Update `last-run` in `.overmind/config.yaml` (dream section) to today.
+11. Commit only the files you changed: `git -C {{WORKSPACE_DIR}} add <paths> && git -C
     {{WORKSPACE_DIR}} commit -m "chore: dream <YYYY-MM-DD>"`, with the summary of findings
     and fixes in the body (the commit message is the log entry). The pre-commit gate runs;
     fix what it refuses. **Local-only repo, never push.**

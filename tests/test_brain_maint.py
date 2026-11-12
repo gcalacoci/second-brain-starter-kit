@@ -51,7 +51,8 @@ class BrainMaintTests(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("### brain_lint (rc=0)", r.stdout)
         self.assertIn("### doctor (rc=1)", r.stdout)  # hooksPath unset in the throwaway repo
-        self.assertIn("part A: 1 of 6 checks failed: doctor", r.stdout)
+        self.assertIn("part A: 1 of 7 checks failed: doctor", r.stdout)
+        self.assertIn("unsaved sessions: 0", r.stdout)
         self.assertIn("dry run: no agent call", r.stdout)
         self.assertFalse(self.prompt.exists())
 

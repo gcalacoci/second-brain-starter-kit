@@ -124,7 +124,6 @@ Code matches it against the folder the session started in.
 | `kb-query` | Answer from the brain with citations; optionally file the answer back |
 | `kb-dream` | The Dream Sequence: ingest new files + full lint (contradictions, orphans, stale) |
 | `kb-session-capture` | Save chat takeaways as structured session notes |
-| `kb-auto-session` | Capture pending sessions flagged by the Stop hook (or run by the Dream Sequence) |
 | `kb-update` | Update profile/goals when your context changes (change log + cascade) |
 | `kb-plan` | Gated 6-phase workflow for building brain features (explore → verify) |
 | `kb-skill-add` | Meta-skill: add a new shared skill correctly |
@@ -241,13 +240,13 @@ scan is skipped with a warning.
 
 | Status | Item | Notes |
 |---|---|---|
-| ✅ | Core KB + 9 skills | Ingest, query, dream (incl. weekly review), session, update, plan, skill-add, auto-session, onboard |
+| ✅ | Core KB + 8 skills | Ingest, query, dream (incl. weekly review), session, update, plan, skill-add, onboard |
 | ✅ | 6 subagents (2 brain + 4 dev) | kb-digest, kb-linter, researcher, code-reviewer, bug-fixer, implementer |
 | ✅ | Multi-agent wiring | OpenCode + Claude Code + generic AGENT-PROMPT |
 | ✅ | Safety hooks | JSON guard, path boundaries, secrets, push block, no amend or hook skips, audit log, pre-edit backup |
 | ✅ | Token hooks | context warnings, save-point "Learned" step (learned.py), image re-read guard, status line |
 | ✅ | Automation | brain-maint.sh: scripted checks + agent dream, lock, log rotation, status files, doctor.py |
-| ✅ | Auto-save session | Stop hook → pending markers → kb-auto-session |
+| ✅ | Unsaved-session scanner | unsaved_sessions.py lists sessions that did real work and were never saved; the Dream Sequence reports them, you save or dismiss |
 | ✅ | Search (built-in) | kb-search.py — BM25 + recency, zero deps |
 | ✅ | Media ingestion | PDF (pdftotext), DOCX (pandoc), audio/video (whisper) |
 | ✅ | Batch ingest | inbox/ + media-to-text.sh |
